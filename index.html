@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta id="viewport-meta" name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Musarof Mobile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    </script>
+    
+    <!-- Cashfree SDK for Automatic Payment Gateway -->
+    <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+
+    <style>
+        /* --- Premium App-Like CSS --- */
+        :root {
+            --primary-color: #0071e3;
+            --bg-color: #f2f2f7;
+            --card-bg: #ffffff;
+            --text-main: #1c1c1e;
+            --text-sub: #3a3a3c;
+            --border-radius: 16px;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+            --nav-bg: rgba(255, 255, 255, 0.98);
+            --whatsapp-color: #25D366;
+            --highlight-bg: #ffe600;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        ::-webkit-scrollbar { display: none; }
+        body { -ms-overflow-style: none; scrollbar-width: none; font-family: 'Poppins', sans-serif; margin: 0; padding: 0 0 90px 0; background-color: var(--bg-color); color: var(--text-main); user-select: none; -webkit-font-smoothing: antialiased; overscroll-behavior-y: none; }
+        input, textarea { user-select: text; }
+
+        /* Auth Overlay, Payment Modal, etc. */
+        .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; overflow-y: auto; }
+        .auth-card { width: 100%; max-width: 350px; padding: 20px; }
+        .auth-input { width: 100%; padding: 14px; margin-bottom: 12px; border: 1px solid #e5e5ea; border-radius: 12px; font-size: 14px; background: #f9f9f9; outline: none; font-family: 'Poppins', sans-serif; transition: 0.3s; }
+        .auth-input:focus { border-color: var(--primary-color); background: #fff; }
+        .auth-btn { width: 100%; padding: 14px; background: var(--primary-color); color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 15px; transition: opacity 0.2s; }
+        .auth-btn:active { opacity: 0.8; }
+        .toggle-link { color: var(--primary-color); font-weight: 600; cursor: pointer; font-size: 13px; }
+
+        .payment-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 15000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px); padding: 20px; }
+        .payment-box { background: #ffffff; width: 100%; max-width: 360px; padding: 30px 20px; border-radius: 30px; text-align: center; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); max-height: 90vh; overflow-y: auto; }
+        @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .close-btn-round { position: absolute; top: 20px; right: 20px; width: 30px; height: 30px; background: #f0f0f5; color: #888; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; transition: 0.2s; }
+        .pay-title { font-size: 22px; font-weight: 700; color: var(--primary-color); margin: 0 0 5px; }
+        .pay-subtitle { font-size: 13px; color: #8e8e93; margin-bottom: 25px; font-weight: 500; }
+        .plan-container { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+        .plan-option { border: 2px solid #f2f2f7; padding: 16px 20px; border-radius: 20px; background: #ffffff; cursor: pointer; transition: all 0.2s ease; display: flex; justify-content: space-between; align-items: center; position: relative; overflow: hidden; }
+        .plan-check-badge { position: absolute; top: 0; right: 0; background: var(--primary-color); color: white; width: 24px; height: 20px; border-bottom-left-radius: 12px; display: none; align-items: center; justify-content: center; font-size: 10px; }
+        .plan-option.selected { border-color: var(--primary-color); background: #f2f8ff; box-shadow: 0 4px 15px rgba(0, 113, 227, 0.15); }
+        .plan-option.selected .plan-check-badge { display: flex; }
+        .plan-info strong { font-size: 16px; color: #1c1c1e; font-weight: 700; display: block; margin-bottom: 2px; }
+        .plan-info small { font-size: 12px; color: #8e8e93; }
+        .plan-price { font-size: 18px; color: var(--primary-color); font-weight: 700; }
+        .pay-input { width: 100%; padding: 16px; margin-bottom: 12px; border: none; border-radius: 14px; font-size: 14px; background: #f2f2f7; outline: none; color: #1c1c1e; font-weight: 500; transition: 0.3s; }
+        .pay-input:focus { background: #e5e5ea; }
+        .submit-pay-btn { background: var(--primary-color); color: white; border: none; width: 100%; padding: 16px; border-radius: 16px; font-size: 16px; font-weight: 600; margin-top: 10px; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 113, 227, 0.3); display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.1s; }
+        .submit-pay-btn:active { transform: scale(0.98); }
+
+        .user-status-bar { background: white; padding: 12px 15px; border-radius: 14px; margin: 10px auto; max-width: 800px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); font-size: 13px; }
+        .status-badge { padding: 5px 12px; border-radius: 20px; font-weight: 600; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        .status-free { background: #f2f2f7; color: #555; }
+        .status-premium { background: #ffe600; color: #000; box-shadow: 0 2px 8px rgba(255, 230, 0, 0.4); }
+        .premium-lock-icon { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: #fff; padding: 6px; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; font-size: 12px; z-index: 10; }
+
+        .header { background: var(--primary-color); color: white; text-align: center; padding: 20px 15px 35px 15px; border-bottom-left-radius: 28px; border-bottom-right-radius: 28px; position: relative; z-index: 1000; box-shadow: 0 4px 20px rgba(0, 113, 227, 0.25); }
+        .header h1 { margin: 0; font-size: 1.5em; font-weight: 700; letter-spacing: 0.5px; }
+        .search-container { display: flex; justify-content: center; position: sticky; top: 10px; z-index: 1001; margin-top: -28px; padding: 0 15px; transition: all 0.3s ease; }
+        .search-wrapper { position: relative; width: 100%; max-width: 600px; background: #fff; border-radius: 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+        .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #8e8e93; pointer-events: none; }
+        .search-box { width: 100%; padding: 14px 40px 14px 48px; font-size: 0.95em; border: none; outline: none; border-radius: 18px; background: transparent; font-family: 'Poppins', sans-serif; color: #000; }
+        .clear-search-btn { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: #e5e5ea; border: none; width: 24px; height: 24px; border-radius: 50%; font-size: 14px; color: #666; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 25; }
+        .search-lock-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 20; border-radius: 18px; cursor: pointer; display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; }
+        .search-lock-badge { background: #f2f2f7; color: #555; padding: 5px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        .container { max-width: 800px; margin: 0 auto; padding: 0 12px; }
+        .display-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 20px; padding-bottom: 20px; align-items: start; }
+        .display-card { background-color: var(--card-bg); border-radius: var(--border-radius); box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid rgba(255,255,255,0.8); display: flex; flex-direction: column; width: 100%; overflow: hidden; position: relative; transition: transform 0.15s ease-out; will-change: transform; }
+        .display-card:active { transform: scale(0.97); }
+        .card-image-container { width: 100%; height: 145px; padding: 12px; background: #fff; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #f2f2f7; }
+        .display-card img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.06)); }
+        .display-card-content { padding: 12px; display: flex; flex-direction: column; flex-grow: 1; }
+        .display-card h3 { margin: 0 0 6px 0; color: var(--primary-color); font-size: 0.95rem; font-weight: 700; line-height: 1.3; word-wrap: break-word; }
+        .display-card p { font-size: 11px; color: var(--text-sub); margin: 0; line-height: 1.5; white-space: normal; word-wrap: break-word; letter-spacing: 0.2px; text-align: left; }
+        mark { background-color: var(--highlight-bg); color: #000; padding: 0 2px; border-radius: 3px; font-weight: 600; }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: auto; background-color: var(--nav-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(0,0,0,0.08); display: flex; justify-content: space-around; align-items: center; padding-top: 8px; padding-bottom: calc(8px + env(safe-area-inset-bottom)); z-index: 5000; box-shadow: 0 -5px 25px rgba(0,0,0,0.04); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #98989d; flex-grow: 1; transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94); cursor: pointer; padding: 5px 0; max-width: 80px; }
+        .nav-item.active { color: var(--primary-color); }
+        .nav-item.active img, .nav-item.active svg { transform: translateY(-2px); filter: drop-shadow(0 4px 6px rgba(0, 113, 227, 0.25)); }
+        .nav-item svg, .nav-item img { width: 24px; height: 24px; margin-bottom: 3px; display: block; }
+        .nav-item span { font-size: 10px; font-weight: 500; letter-spacing: 0.3px; margin-top: 2px; }
+
+        .nav-item.ai-nav-item { margin-top: -25px; }
+        .nav-item.ai-nav-item .ai-icon-circle { width: 54px; height: 54px; background: linear-gradient(135deg, #0071e3, #4c9efc); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(0, 113, 227, 0.4); border: 4px solid var(--bg-color); transition: all 0.2s; }
+        .nav-item.ai-nav-item.active .ai-icon-circle { transform: scale(1.1); box-shadow: 0 10px 25px rgba(0, 113, 227, 0.5); }
+        .nav-item.ai-nav-item svg { width: 28px; height: 28px; fill: white; margin: 0; }
+        .nav-item.ai-nav-item span { margin-top: 5px; font-weight: 600; color: var(--primary-color); }
+
+        #ai-view-container { display: none; padding-top: 20px; padding-bottom: 20px; animation: fadeIn 0.3s ease; }
+        .ai-header-inline { text-align: center; margin-bottom: 20px; }
+        .ai-header-inline h2 { margin: 0; color: var(--primary-color); font-size: 1.4em; }
+        .ai-header-inline p { margin: 5px 0 0; color: #666; font-size: 0.9em; }
+        .ai-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 0 5px; }
+        .ai-category-card { background: #fff; border: 1px solid #f0f0f5; border-radius: 18px; padding: 20px 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.04); height: 140px; position: relative; }
+        .ai-category-card:active { transform: scale(0.97); background: #f9f9f9; }
+        .ai-category-card img { width: 50px; height: 50px; margin-bottom: 12px; object-fit: contain; }
+        .ai-category-card span { font-size: 13px; font-weight: 600; color: #333; text-align: center; line-height: 1.3; }
+        #ai-chat-view { display: none; background: #fff; border-radius: 18px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); min-height: 300px; }
+        .ai-back-btn { background: #f2f2f7; border: none; padding: 8px 15px; border-radius: 8px; color: var(--primary-color); font-weight: 600; cursor: pointer; display: flex; align-items: center; font-size: 14px; margin-bottom: 15px; }
+        .ai-cover-input { width: 100%; padding: 15px; border-radius: 14px; border: 1px solid #e5e5ea; background: #f2f2f7; font-size: 16px; margin-bottom: 15px; outline: none; }
+        .ai-cover-input:focus { border-color: #0071e3; background: #fff; }
+        .ai-search-btn { width: 100%; padding: 14px; background: #0071e3; color: white; border: none; border-radius: 14px; font-weight: 600; font-size: 16px; cursor: pointer; transition: opacity 0.2s; }
+        .ai-search-btn:active { opacity: 0.8; }
+        #ai-result-area { margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 12px; min-height: 60px; text-align: left; font-size: 15px; color: #333; display: none; border-left: 4px solid var(--primary-color); line-height: 1.6; }
+
+        #loader { text-align: center; padding: 60px 0; }
+        .spinner { width: 35px; height: 35px; border: 3px solid #e1e1e1; border-top: 3px solid var(--primary-color); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .no-results { display: none; flex-direction: column; align-items: center; padding: 50px 20px; text-align: center; color: var(--text-sub); }
+
+        .overlay-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.98); z-index: 10000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        #update-overlay { z-index: 20000; display: none; }
+        #update-overlay .auth-box { padding: 0; overflow: hidden; background: #fff; max-width: 360px; width: 90%; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: center; }
+        .update-media-container { width: 100%; height: 200px; background: #f0f2f5; display: flex; align-items: center; justify-content: center; position: relative; }
+        .update-media-container iframe, .update-media-container video { width: 100%; height: 100%; object-fit: cover; border: none; }
+        .update-default-icon { font-size: 60px; color: var(--primary-color); animation: bounce 2s infinite; }
+        .update-content { padding: 25px 20px; }
+        .update-content h2 { margin: 0 0 10px; color: #1c1c1e; font-size: 1.5em; font-weight: 700; }
+        .update-content p { color: #666; font-size: 0.95em; line-height: 1.5; margin-bottom: 25px; }
+        #update-now-btn { background: linear-gradient(135deg, #0071e3, #00c6ff); box-shadow: 0 4px 15px rgba(0, 113, 227, 0.4); border-radius: 50px; padding: 15px; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; color: white; border: none; width: 100%; font-weight: 600; cursor: pointer; }
+        #update-now-btn:active { transform: scale(0.98); }
+
+        .whatsapp-fab { position: fixed; bottom: 85px; right: 20px; width: 54px; height: 54px; background: var(--whatsapp-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4); z-index: 4000; transition: transform 0.2s; }
+        .whatsapp-fab:active { transform: scale(0.95); }
+        .whatsapp-fab svg { width: 28px; height: 28px; fill: white; }
+        .whatsapp-modal, .popup-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 12000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-content, .popup-content { background: white; width: 85%; max-width: 320px; padding: 25px; border-radius: 24px; text-align: center; position: relative; animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        .modal-button { display: block; padding: 14px; margin-top: 10px; border-radius: 12px; color: white; text-decoration: none; font-weight: 600; font-size: 15px; }
+        .modal-button.chat { background: var(--whatsapp-color); }
+        .modal-button.group { background: var(--primary-color); }
+        .close-modal-btn { position: absolute; top: 12px; right: 15px; font-size: 26px; color: #c7c7cc; cursor: pointer; padding: 5px; }
+        .category-content { display: none; }
+        .category-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ========== HARDWARE SECTION STYLES ========== */
+        #hw-view-container { display: none; padding-top: 20px; padding-bottom: 20px; animation: fadeIn 0.3s ease; }
+        .hw-header-inline { text-align: center; margin-bottom: 20px; }
+        .hw-header-inline h2 { margin: 0; color: var(--primary-color); font-size: 1.4em; }
+        .hw-header-inline p { margin: 5px 0 0; color: #666; font-size: 0.9em; }
+        .hw-search-container { margin-bottom: 20px; position: relative; }
+        .hw-search-box { width: 100%; padding: 12px 16px; border: 1px solid #e5e5ea; border-radius: 12px; font-size: 14px; background: #fff; outline: none; transition: 0.2s; }
+        .hw-search-box:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0,113,227,0.1); }
+        .hw-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 0 5px; }
+        .hw-brand-card, .hw-model-card { background: #fff; border: 1px solid #f0f0f5; border-radius: 18px; padding: 20px 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.04); height: 140px; position: relative; }
+        .hw-brand-card:active, .hw-model-card:active { transform: scale(0.97); background: #f9f9f9; }
+        .hw-brand-card img, .hw-model-card img { width: 50px; height: 50px; margin-bottom: 12px; object-fit: contain; }
+        .hw-brand-card span, .hw-model-card span { font-size: 13px; font-weight: 600; color: #333; text-align: center; line-height: 1.3; }
+        .hw-diagram-list { display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
+        .hw-diagram-item { background: #fff; border-radius: 18px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .hw-diagram-title { padding: 12px 16px; background: #f8f9fa; font-weight: 600; color: var(--primary-color); border-bottom: 1px solid #eee; }
+        .hw-diagram-content { width: 100%; padding: 12px; display: flex; justify-content: center; cursor: pointer; }
+        .hw-diagram-content img { max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 12px; transition: transform 0.2s; }
+        .hw-diagram-content img:active { transform: scale(0.98); }
+        .hw-diagram-content a { text-decoration: none; color: var(--primary-color); font-weight: 500; display: inline-flex; align-items: center; gap: 8px; background: #f2f2f7; padding: 8px 16px; border-radius: 20px; transition: 0.2s; }
+        .hw-diagram-content a:hover { background: #e5e5ea; }
+        .hw-back-btn { background: #f2f2f7; border: none; padding: 8px 15px; border-radius: 8px; color: var(--primary-color); font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-size: 14px; margin-bottom: 15px; }
+        .hw-empty { text-align: center; color: #999; padding: 40px 20px; }
+        .nav-item.hw-nav-item.locked::after { content: "\f023"; font-family: "Font Awesome 6 Free"; font-weight: 900; position: absolute; top: -2px; right: 8px; font-size: 12px; color: #ff3b30; background: rgba(255,255,255,0.8); border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }
+
+        /* ===== UPDATE: SEAMLESS FULL-SCREEN ZOOM MODAL ===== */
+        .image-zoom-modal { 
+            position: absolute; top: 0; left: 0; width: 100%; min-height: 100vh; 
+            background: #ffffff; z-index: 20000; display: none; padding-bottom: 30px;
+        }
+        .image-zoom-modal .zoom-content { 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; min-height: 100vh;
+        }
+        .image-zoom-modal canvas, .image-zoom-modal img { 
+            width: 100%; height: auto; display: block; margin: 0; padding: 0; border: none;
+        }
+        .close-zoom { 
+            position: fixed; top: 20px; right: 20px; color: white; font-size: 28px; cursor: pointer; 
+            background: rgba(0,0,0,0.6); width: 45px; height: 45px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; z-index: 20001; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: 0.2s;
+        }
+        .close-zoom:hover { background: rgba(0,0,0,0.9); transform: scale(1.05); }
+    </style>
+</head>
+<body>
+    
+    <div id="auth-overlay" class="auth-overlay">
+        <div class="auth-card">
+            <img src="https://cdn-icons-png.flaticon.com/512/2103/2103832.png" alt="Logo" style="width: 70px; margin-bottom: 15px;">
+            <h2 style="margin: 0 0 5px; color: var(--primary-color); font-weight: 700;">Musarof Mobile</h2>
+            <p style="color: #666; font-size: 13px; margin-bottom: 25px;">Premium Smart Solution</p>
+            <div id="auth-loading-spinner" style="padding: 20px 0;"><div class="spinner"></div><p style="margin-top: 15px; color: #888; font-size: 12px;">অ্যাকাউন্ট চেক করা হচ্ছে...</p></div>
+            <div id="login-form-container" style="display: none;">
+                <input type="email" id="login-email" class="auth-input" placeholder="Email Address">
+                <input type="password" id="login-password" class="auth-input" placeholder="Password">
+                <button onclick="handleEmailLogin()" class="auth-btn">Log In</button>
+                <p style="font-size: 13px; color: #666;">Don't have an account? <span class="toggle-link" onclick="toggleAuth('signup')">Sign Up</span></p>
+            </div>
+            <div id="signup-form-container" style="display: none;">
+                <input type="text" id="signup-name" class="auth-input" placeholder="Full Name">
+                <input type="tel" id="signup-phone" class="auth-input" placeholder="Phone Number">
+                <input type="email" id="signup-email" class="auth-input" placeholder="Email Address">
+                <input type="password" id="signup-password" class="auth-input" placeholder="Create Password">
+                <button onclick="handleEmailSignup()" class="auth-btn">Create Account</button>
+                <p style="font-size: 13px; color: #666; margin-top: 15px;">Already have an account? <span class="toggle-link" onclick="toggleAuth('login')">Log In</span></p>
+            </div>
+            <p id="auth-error-msg" style="color: #ff3b30; margin-top: 15px; font-size: 12px;"></p>
+        </div>
+    </div>
+
+    <div id="block-overlay" class="auth-overlay" style="display: none; z-index: 100000;">
+        <i class="fa-solid fa-shield-halved" style="font-size: 50px; color: #ff3b30; margin-bottom: 20px;"></i>
+        <h2 id="block-title" style="color: #333;">Security Alert</h2>
+        <p id="block-msg" style="color: #666; max-width: 300px; margin: 10px 0 20px;">This account is active on another device.</p>
+        <button onclick="handleLogout()" style="padding: 10px 25px; border:none; background:#f2f2f7; border-radius:12px; font-weight: 600; color: #333;">Log Out</button>
+    </div>
+
+    <div id="payment-modal" class="payment-modal">
+        <div class="payment-box">
+            <div class="close-btn-round" onclick="closePaymentModal()"><i class="fa-solid fa-xmark"></i></div>
+            <h3 class="pay-title">Upgrade to Premium 💎</h3>
+            <p class="pay-subtitle">Unlock AI Tools & Premium Content</p>
+            <div class="plan-container">
+                <div class="plan-option selected" onclick="selectPlan('7days', this)">
+                    <div class="plan-check-badge"><i class="fa-solid fa-check"></i></div>
+                    <div class="plan-info" style="text-align: left;"><strong>Weekly Pass</strong><small>7 Days Access</small></div>
+                    <div class="plan-price" id="weekly-price-text">₹50</div>
+                </div>
+                <div class="plan-option" onclick="selectPlan('30days', this)">
+                    <div class="plan-check-badge"><i class="fa-solid fa-check"></i></div>
+                    <div class="plan-info" style="text-align: left;"><strong>Monthly Pass</strong><small>30 Days Access</small></div>
+                    <div class="plan-price" id="monthly-price-text">₹150</div>
+                </div>
+            </div>
+            <div style="text-align: left; margin-top: 15px;">
+                <input type="number" id="payment-phone" class="pay-input" placeholder="Your Phone Number (For Verification)">
+            </div>
+            <button onclick="submitPayment()" class="submit-pay-btn"><i class="fa-solid fa-credit-card"></i> Pay Now</button>
+        </div>
+    </div>
+
+    <div id="update-overlay" class="overlay-bg">
+        <div class="auth-box">
+            <div class="update-media-container" id="update-media-area">
+                <div class="update-default-icon"><svg viewBox="0 0 24 24" style="width:70px;height:70px;fill:var(--primary-color);"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Zm-1,15V15H13V17H11ZM11,7V13H13V7H11Z" transform="rotate(180 12 12)"/></svg></div>
+            </div>
+            <div class="update-content">
+                <h2>নতুন আপডেট উপলব্ধ!</h2>
+                <p>সেরা পারফরম্যান্স এবং নতুন ফিচারের জন্য এখনই অ্যাপটি আপডেট করে নিন।</p>
+                <button id="update-now-btn" class="update-btn">এখনই আপডেট করুন 🚀</button>
+            </div>
+        </div>
+    </div>
+    
+    <main id="main-app-content">
+        <header class="header"><h1>Musarof Mobile</h1></header>
+
+        <div id="global-search-container" class="search-container">
+            <div class="search-wrapper">
+                <span class="search-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
+                <input type="text" id="global-search-box" class="search-box" placeholder="মডেল খুঁজুন..." autocomplete="off">
+                <button id="global-clear-search-btn" class="clear-search-btn">&times;</button>
+            </div>
+        </div>
+
+        <div class="container" id="main-container-content">
+            <div class="user-status-bar">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img id="user-pic" src="https://via.placeholder.com/30" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                    <div>
+                        <div id="user-name" style="font-weight: 600; font-size: 14px; color: #1c1c1e;">Guest</div>
+                        <div style="font-size: 10px; color: #888;">ID: <span id="user-uid-display">...</span></div>
+                    </div>
+                </div>
+                <div id="sub-badge" class="status-badge status-free" onclick="openPaymentModal()"><i class="fa-solid fa-lock"></i> Upgrade</div>
+            </div>
+
+            <div id="category-content-container"></div>
+            
+            <div id="ai-view-container">
+                <div class="ai-header-inline"><h2>AI Tools</h2><p>আপনার স্মার্ট অ্যাসিস্ট্যান্ট</p></div>
+                <div id="ai-menu-view"><div id="ai-tools-grid" class="ai-grid"><div class="spinner"></div></div></div>
+                <div id="ai-chat-view">
+                    <button class="ai-back-btn" onclick="showAIMenu()">&#8592; টুলস মেনু</button>
+                    <h3 id="ai-tool-title" style="margin-top:0; color:#333;">AI Tool</h3>
+                    <p style="font-size: 13px; color: #666; margin-bottom: 20px;">আপনার প্রশ্ন বা মডেল নাম লিখুন, AI উত্তর দেবে.</p>
+                    <input type="text" id="ai-input" class="ai-cover-input" placeholder="এখানে লিখুন...">
+                    <button class="ai-search-btn" onclick="processAIRequest()">খুঁজুন</button>
+                    <div id="ai-result-area"></div>
+                </div>
+            </div>
+
+            <div id="hw-view-container">
+                <div class="hw-header-inline"><h2>Hardware Solutions</h2><p>Borneo Diagram & Repair Guide</p></div>
+                <div id="hw-brands-view">
+                    <div class="hw-search-container">
+                        <input type="text" id="hw-brand-search" class="hw-search-box" placeholder="🔍 ব্র্যান্ড খুঁজুন...">
+                    </div>
+                    <div id="hw-brands-grid" class="hw-grid"><div class="spinner"></div></div>
+                </div>
+                <div id="hw-models-view" style="display:none;">
+                    <button class="hw-back-btn" onclick="showHardwareBrands()"><i class="fas fa-arrow-left"></i> ব্র্যান্ডসমূহ</button>
+                    <div class="hw-search-container" style="margin-bottom: 15px;">
+                        <input type="text" id="hw-model-search" class="hw-search-box" placeholder="🔍 মডেল খুঁজুন...">
+                    </div>
+                    <div id="hw-models-grid" class="hw-grid"></div>
+                </div>
+                <div id="hw-diagrams-view" style="display:none;">
+                    <button class="hw-back-btn" onclick="showHardwareModels()"><i class="fas fa-arrow-left"></i> মডেলসমূহ</button>
+                    <div id="hw-diagrams-list" class="hw-diagram-list"></div>
+                </div>
+            </div>
+
+            <div id="loader"><div class="spinner"></div><p style="margin-top: 15px; color: #999; font-size: 13px;">লোড হচ্ছে...</p></div>
+        </div>
+        
+        <nav id="bottom-nav" class="bottom-nav"></nav>
+        <div id="whatsapp-container"></div>
+    </main>
+
+    <div id="image-zoom-modal" class="image-zoom-modal">
+        <span class="close-zoom" onclick="closeImageZoom()">&times;</span>
+        <div class="zoom-content" id="zoom-content"></div>
+    </div>
+
+    <div id="whatsapp-modal" class="whatsapp-modal">
+        <div class="modal-content">
+            <span id="close-modal-btn" class="close-modal-btn">&times;</span>
+            <p style="font-weight: 700; font-size: 1.2em; margin-bottom: 25px; color: #1c1c1e;">যোগাযোগ করুন</p>
+            <a href="#" id="whatsapp-chat-link" target="_blank" class="modal-button chat" style="display: none;">সরাসরি চ্যাট</a>
+            <a href="#" id="whatsapp-group-link" target="_blank" class="modal-button group" style="display: none;">গ্রুপে জয়েন</a>
+        </div>
+    </div>
+    
+    <div id="announcement-popup" class="popup-overlay">
+        <div class="popup-content">
+            <h3 style="color:var(--primary-color);">📢 ঘোষণা</h3>
+            <p id="announcement-popup-message" style="color:#555; line-height:1.6; margin:15px 0 25px; font-size: 14px;"></p>
+            <button id="announcement-popup-close" style="width:100%; padding:12px; background:var(--primary-color); color:white; border:none; border-radius:12px; font-weight:600;">বন্ধ করুন</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    
+    <script>
+        // আপনার দেওয়া নতুন Apps Script URL
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbws5XqwPBkSw0thxls-BfkD5yHZAX3Dc-Ek6VXGem8uqOaRt3X5-8q98DX36QFTGTlM/exec";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCc1tsd9a_Uf_x0guHOD61VwinSeOBSM_M",
+            authDomain: "musarof-mobile.firebaseapp.com",
+            projectId: "musarof-mobile",
+            storageBucket: "musarof-mobile.firebasestorage.app",
+            messagingSenderId: "913406784221",
+            appId: "1:913406784221:web:a462e61d461ddff7bca134"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        const displaysCollection = db.collection('displays');
+        const categoriesCollection = db.collection('categories');
+        const announcementDoc = db.collection('appStatus').doc('announcement');
+        const contactInfoDoc = db.collection('appStatus').doc('contactInfo');
+        const usersCollection = db.collection('users');
+        const paymentInfoDoc = db.collection('appStatus').doc('paymentInfo');
+        
+        // Hardware collections
+        const hwBrandsCol = db.collection('hw_brands');
+        const hwModelsCol = db.collection('hw_models');
+        const hwDiagramsCol = db.collection('hw_diagrams');
+        
+        const aiConfigDoc = db.collection('appStatus').doc('aiConfig');
+        const aiCategoriesCollection = db.collection('ai_categories');
+        
+        const currentInstalledVersion = "5.0";
+        let currentUser = null;
+        let isPremium = false;
+        let currentDeviceId = localStorage.getItem('device_id');
+
+        if (!currentDeviceId) {
+            currentDeviceId = 'dev_' + Math.random().toString(36).substr(2, 9) + Date.now();
+            localStorage.setItem('device_id', currentDeviceId);
+        }
+
+        // === AUTH LOGIC ===
+        window.toggleAuth = function(mode) {
+            document.getElementById('auth-error-msg').innerText = "";
+            if(mode === 'signup') {
+                document.getElementById('login-form-container').style.display = 'none';
+                document.getElementById('signup-form-container').style.display = 'block';
+            } else {
+                document.getElementById('signup-form-container').style.display = 'none';
+                document.getElementById('login-form-container').style.display = 'block';
+            }
+        }
+        window.handleEmailLogin = function() {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-password').value;
+            if(!email || !pass) { document.getElementById('auth-error-msg').innerText = "Please fill all fields"; return; }
+            auth.signInWithEmailAndPassword(email, pass).catch(err => {
+                let msg = err.message;
+                if(err.code === 'auth/user-not-found') msg = "User not found. Please Sign Up.";
+                if(err.code === 'auth/wrong-password') msg = "Incorrect Password.";
+                document.getElementById('auth-error-msg').innerText = msg;
+            });
+        }
+        window.handleEmailSignup = function() {
+            const name = document.getElementById('signup-name').value;
+            const phone = document.getElementById('signup-phone').value;
+            const email = document.getElementById('signup-email').value;
+            const pass = document.getElementById('signup-password').value;
+            if(!name || !phone || !email || !pass) { document.getElementById('auth-error-msg').innerText = "Please fill all fields"; return; }
+            sessionStorage.setItem('signup_phone', phone);
+            sessionStorage.setItem('signup_name', name);
+            auth.createUserWithEmailAndPassword(email, pass).then((userCredential) => {
+                userCredential.user.updateProfile({ displayName: name });
+            }).catch(err => { document.getElementById('auth-error-msg').innerText = err.message; });
+        }
+        window.handleLogout = function() { auth.signOut().then(() => location.reload()); }
+
+        auth.onAuthStateChanged(async (user) => {
+            const authOverlay = document.getElementById('auth-overlay');
+            const loadingSpinner = document.getElementById('auth-loading-spinner');
+            const loginForm = document.getElementById('login-form-container');
+            const mainContent = document.getElementById('main-app-content');
+            
+            if (user) {
+                currentUser = user;
+                const name = user.displayName || 'User';
+                document.getElementById('user-name').innerText = name.split(' ')[0];
+                document.getElementById('user-pic').src = user.photoURL || `https://ui-avatars.com/api/?name=${name}&background=0071e3&color=fff`;
+                document.getElementById('user-uid-display').innerText = user.uid.substring(0, 6);
+                
+                // === 100% SECURE VERIFICATION (HACK-PROOF) ===
+                const params = new URLSearchParams(window.location.search);
+                const returnOrderId = params.get('order_id');
+                
+                if (returnOrderId) {
+                    // Show Verification Loader
+                    authOverlay.style.display = 'flex';
+                    mainContent.style.display = 'none';
+                    loginForm.style.display = 'none';
+                    document.getElementById('signup-form-container').style.display = 'none';
+                    
+                    loadingSpinner.style.display = 'block';
+                    loadingSpinner.innerHTML = '<div class="spinner"></div><p style="margin-top: 15px; color: var(--primary-color); font-size: 14px; font-weight:600;">পেমেন্ট স্ট্যাটাস চেক করা হচ্ছে...</p>';
+                    
+                    // URL থেকে order_id সাথে সাথে মুছে ফেলা হচ্ছে যাতে রিলোড করলে সমস্যা না হয়
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    
+                    try {
+                        const response = await fetch(APPS_SCRIPT_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify({ action: "verify", order_id: returnOrderId })
+                        });
+                        
+                        const orderStatusData = await response.json();
+                        
+                        // যদি সার্ভার বলে পেমেন্ট সফল হয়েছে, কেবল তখনই আনলক হবে
+                        if (orderStatusData && orderStatusData.order_status === "PAID") {
+                            const pendingPlan = localStorage.getItem('pending_payment') || '7days';
+                            activatePremiumSubscription(pendingPlan);
+                            alert("✅ পেমেন্ট সফল হয়েছে! আপনার অ্যাকাউন্ট আনলক করা হয়েছে।");
+                        } else {
+                            // কেউ ব্যাক করে ফিরে আসলে বা ফেল করলে এই মেসেজ দেখাবে
+                            alert("❌ পেমেন্ট সম্পন্ন হয়নি! (স্ট্যাটাস: " + (orderStatusData.order_status || "FAILED") + ")");
+                        }
+                    } catch(e) {
+                        alert("⚠️ সার্ভার সমস্যা! পেমেন্ট যাচাই করা যায়নি।");
+                    }
+                    
+                    localStorage.removeItem('pending_payment');
+                    
+                    // ২ সেকেন্ড পর অ্যাপ লোড হবে
+                    loadingSpinner.innerHTML = '<div class="spinner"></div><p style="margin-top: 15px; color: #888; font-size: 12px;">অ্যাপ লোড হচ্ছে...</p>';
+                    setTimeout(() => {
+                        authOverlay.style.display = 'none';
+                        mainContent.style.display = 'block';
+                        checkUserSecurity(user);
+                        checkAppVersion();
+                        initializeApp();
+                    }, 1500);
+
+                } else {
+                    authOverlay.style.display = 'none';
+                    mainContent.style.display = 'block';
+                    checkUserSecurity(user);
+                    checkAppVersion();
+                    initializeApp();
+                }
+            } else {
+                loadingSpinner.style.display = 'none';
+                loginForm.style.display = 'block'; 
+                authOverlay.style.display = 'flex';
+                mainContent.style.display = 'none';
+            }
+        });
+
+        async function checkUserSecurity(user) {
+            const userRef = usersCollection.doc(user.uid);
+            userRef.get().then((docSnapshot) => {
+                if (!docSnapshot.exists) {
+                    const phone = sessionStorage.getItem('signup_phone') || "";
+                    const signupName = sessionStorage.getItem('signup_name');
+                    const finalName = signupName || user.displayName || 'User';
+                    userRef.set({
+                        email: user.email,
+                        displayName: finalName,
+                        phoneNumber: phone,
+                        deviceId: currentDeviceId,
+                        isBanned: false,
+                        subscriptionStatus: 'free',
+                        planExpiry: null,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }).then(() => {
+                        sessionStorage.removeItem('signup_phone');
+                        sessionStorage.removeItem('signup_name');
+                    });
+                } else {
+                    userRef.update({ email: user.email, deviceId: currentDeviceId }, { merge: true });
+                }
+            });
+            userRef.onSnapshot((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    if (data.isBanned) { showBlockScreen("Account Banned", "Admin has suspended your account access."); return; }
+                    if (data.deviceId && data.deviceId !== currentDeviceId) { showBlockScreen("Security Alert", "You are logged in on another device. Logout from there to continue here."); return; } 
+                    checkPremiumStatus(data);
+                }
+            });
+        }
+
+        function showBlockScreen(title, msg) {
+            document.getElementById('block-overlay').style.display = 'flex';
+            document.getElementById('block-title').innerText = title;
+            document.getElementById('block-msg').innerText = msg;
+            document.getElementById('main-app-content').style.filter = "blur(10px)";
+        }
+
+        function checkPremiumStatus(data) {
+            const now = new Date();
+            const expiry = data.planExpiry ? data.planExpiry.toDate() : null;
+            const badge = document.getElementById('sub-badge');
+            const searchBox = document.getElementById('global-search-box');
+            const searchWrapper = document.querySelector('.search-wrapper');
+            const existingOverlay = document.getElementById('search-lock-overlay');
+            if(existingOverlay) existingOverlay.remove();
+
+            if (data.subscriptionStatus === 'active' && expiry && expiry > now) {
+                isPremium = true;
+                const daysLeft = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
+                badge.className = 'status-badge status-premium';
+                badge.innerHTML = `<i class="fa-solid fa-crown"></i> Premium (${daysLeft}d)`;
+                if(availableAICategories.length > 0) renderAIToolsMenu();
+                if(searchBox) { searchBox.removeAttribute('readonly'); searchBox.placeholder = "মডেল খুঁজুন..."; }
+                const hwNav = document.querySelector('.hw-nav-item');
+                if (hwNav) hwNav.classList.remove('locked');
+            } else {
+                isPremium = false;
+                badge.className = 'status-badge status-free';
+                badge.innerHTML = `<i class="fa-solid fa-lock"></i> Upgrade`;
+                if(availableAICategories.length > 0) renderAIToolsMenu();
+                if (data.subscriptionStatus === 'active' && expiry < now) {
+                    usersCollection.doc(currentUser.uid).update({ subscriptionStatus: 'expired' });
+                }
+                if(searchBox && searchWrapper) {
+                    searchBox.setAttribute('readonly', true);
+                    searchBox.placeholder = "Search (Premium) 🔒";
+                    const overlay = document.createElement('div');
+                    overlay.id = 'search-lock-overlay';
+                    overlay.className = 'search-lock-overlay';
+                    overlay.innerHTML = `<div class="search-lock-badge"><i class="fa-solid fa-lock"></i> Unlock</div>`;
+                    overlay.onclick = function() { openPaymentModal(); };
+                    searchWrapper.appendChild(overlay);
+                }
+                const hwNav = document.querySelector('.hw-nav-item');
+                if (hwNav) hwNav.classList.add('locked');
+            }
+        }
+
+        // === AUTOMATIC PAYMENT SYSTEM (DYNAMIC LOAD FIX) ===
+        let selectedPlanType = '7days';
+        let currentWeeklyPrice = 50;
+        let currentMonthlyPrice = 150;
+        window.openPaymentModal = function() {
+            const modal = document.getElementById('payment-modal');
+            const weeklyText = document.getElementById('weekly-price-text');
+            const monthlyText = document.getElementById('monthly-price-text');
+            paymentInfoDoc.onSnapshot(doc => {
+                if(doc.exists) {
+                    const data = doc.data();
+                    if(data.weeklyPrice) { currentWeeklyPrice = data.weeklyPrice; weeklyText.innerText = `₹${currentWeeklyPrice}`; }
+                    if(data.monthlyPrice) { currentMonthlyPrice = data.monthlyPrice; monthlyText.innerText = `₹${currentMonthlyPrice}`; }
+                }
+            });
+            modal.style.display = 'flex';
+        }
+        window.closePaymentModal = function() { document.getElementById('payment-modal').style.display = 'none'; }
+        window.selectPlan = function(type, elem) {
+            selectedPlanType = type;
+            document.querySelectorAll('.plan-option').forEach(el => el.classList.remove('selected'));
+            elem.classList.add('selected');
+        }
+        
+        window.submitPayment = async function() {
+            const phone = document.getElementById('payment-phone').value.trim();
+            const submitBtn = document.querySelector('.submit-pay-btn');
+            
+            if(!phone) { alert("দয়া করে আপনার ফোন নম্বর দিন।"); return; }
+            
+            const amountToPay = selectedPlanType === '7days' ? currentWeeklyPrice : currentMonthlyPrice;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;border-top-color:#fff;"></div> প্রসেস হচ্ছে...';
+            
+            try {
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: "create", 
+                        uid: currentUser.uid,
+                        phone: phone,
+                        name: currentUser.displayName || 'User',
+                        amount: amountToPay
+                    })
+                });
+                
+                const responseText = await response.text();
+                let orderData;
+                try {
+                    orderData = JSON.parse(responseText);
+                } catch (e) {
+                    alert("সার্ভার এরর! দয়া করে কিছুক্ষণ পর আবার চেষ্টা করুন।");
+                    resetPayButton(submitBtn);
+                    return;
+                }
+                
+                if(orderData && orderData.payment_session_id) {
+                    localStorage.setItem('pending_payment', selectedPlanType);
+                    
+                    // Cashfree Load Fix (Dynamic Script Injection)
+                    if (typeof Cashfree !== 'undefined') {
+                        const cashfree = Cashfree({ mode: "production" }); 
+                        cashfree.checkout({
+                            paymentSessionId: orderData.payment_session_id,
+                            redirectTarget: "_self" 
+                        });
+                    } else if (typeof window.Cashfree !== 'undefined') {
+                        const cashfree = window.Cashfree({ mode: "production" }); 
+                        cashfree.checkout({
+                            paymentSessionId: orderData.payment_session_id,
+                            redirectTarget: "_self" 
+                        });
+                    } else {
+                        // যদি কোনো কারণে Cashfree স্ক্রিপ্ট আগে লোড না হয়ে থাকে, তবে এটি নিজে লোড করে নেবে
+                        let script = document.createElement('script');
+                        script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
+                        script.onload = function() {
+                            const cashfree = Cashfree({ mode: "production" }); 
+                            cashfree.checkout({
+                                paymentSessionId: orderData.payment_session_id,
+                                redirectTarget: "_self" 
+                            });
+                        };
+                        script.onerror = function() {
+                            alert("Cashfree পেমেন্ট গেটওয়ে লোড হতে সমস্যা হচ্ছে! দয়া করে ইন্টারনেট কানেকশন চেক করুন।");
+                            resetPayButton(submitBtn);
+                        };
+                        document.head.appendChild(script);
+                    }
+                } else {
+                    alert("পেমেন্ট সেশন তৈরি হয়নি!");
+                    resetPayButton(submitBtn);
+                }
+            } catch (err) { 
+                alert("নেটওয়ার্ক সমস্যা: " + err.message); 
+                resetPayButton(submitBtn);
+            }
+        }
+        
+        function resetPayButton(btn) {
+            btn.disabled = false; 
+            btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Pay Now';
+        }
+        
+        function activatePremiumSubscription(planType) {
+            const now = new Date();
+            let days = planType === '7days' ? 7 : 30;
+            const expiryDate = new Date(now.getTime() + (days * 24 * 60 * 60 * 1000));
+            
+            usersCollection.doc(currentUser.uid).update({ 
+                subscriptionStatus: 'active',
+                planExpiry: firebase.firestore.Timestamp.fromDate(expiryDate)
+            }).then(() => {
+                checkPremiumStatus({
+                    subscriptionStatus: 'active',
+                    planExpiry: firebase.firestore.Timestamp.fromDate(expiryDate)
+                });
+            });
+        }
+
+        // --- AI Logic ---
+        let aiConfig = { modelName: "gemini-1.5-flash", apiKeys:[] };
+        let availableAICategories =[];
+        let activePrompt = ""; 
+        let activeMode = "gemini";
+        aiConfigDoc.onSnapshot(doc => {
+            if (doc.exists) {
+                const data = doc.data();
+                if (data.modelName) aiConfig.modelName = data.modelName;
+                if (data.apiKeys && Array.isArray(data.apiKeys)) aiConfig.apiKeys = data.apiKeys.filter(k => k.trim() !== "");
+            }
+        });
+        aiCategoriesCollection.orderBy('order').onSnapshot(snapshot => {
+            availableAICategories =[];
+            snapshot.forEach(doc => { availableAICategories.push({ id: doc.id, ...doc.data() }); });
+            renderAIToolsMenu();
+        });
+        function renderAIToolsMenu() {
+            const grid = document.getElementById('ai-tools-grid');
+            if(availableAICategories.length === 0) { grid.innerHTML = '<p style="grid-column: span 2; color:#999; text-align:center;">কোনো টুল পাওয়া যায়নি।</p>'; return; }
+            grid.innerHTML = '';
+            availableAICategories.forEach(cat => {
+                const card = document.createElement('div');
+                card.className = 'ai-category-card';
+                let lockHtml = !isPremium ? '<div class="premium-lock-icon"><i class="fa-solid fa-lock"></i></div>' : '';
+                let iconContent = (cat.icon && cat.icon.trim().startsWith('<svg')) ? `<div style="width:50px;height:50px;color:#0071e3;">${cat.icon}</div>` : `<img src="${cat.icon || 'https://cdn-icons-png.flaticon.com/512/2103/2103832.png'}" alt="Icon">`;
+                card.innerHTML = `${lockHtml}${iconContent}<span>${cat.name}</span>`;
+                card.onclick = () => { if(!isPremium) openPaymentModal(); else selectAICategory(cat); };
+                grid.appendChild(card);
+            });
+        }
+        window.switchToAI = function() {
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            document.querySelector('.nav-item.ai-nav-item')?.classList.add('active');
+            document.querySelectorAll('.category-content').forEach(content => content.classList.remove('active'));
+            document.getElementById('ai-view-container').style.display = 'block';
+            document.getElementById('hw-view-container').style.display = 'none';
+            const searchContainer = document.getElementById('global-search-container');
+            if(searchContainer) searchContainer.style.display = 'none';
+            showAIMenu(); 
+            window.scrollTo(0,0);
+        }
+        window.showAIMenu = function() { document.getElementById('ai-menu-view').style.display = 'block'; document.getElementById('ai-chat-view').style.display = 'none'; }
+        window.selectAICategory = function(category) {
+            activePrompt = category.systemPrompt; 
+            activeMode = category.mode || 'gemini';
+            document.getElementById('ai-menu-view').style.display = 'none';
+            document.getElementById('ai-chat-view').style.display = 'block';
+            document.getElementById('ai-tool-title').textContent = category.name;
+            document.getElementById('ai-input').focus();
+            document.getElementById('ai-result-area').style.display = 'none';
+            document.getElementById('ai-result-area').innerHTML = '';
+            document.getElementById('ai-input').value = '';
+        }
+        window.processAIRequest = async function() {
+            const input = document.getElementById('ai-input').value.trim();
+            const resultArea = document.getElementById('ai-result-area');
+            if (!input) { alert("দয়া করে কিছু লিখুন"); return; }
+            resultArea.innerHTML = '';
+            resultArea.style.display = 'block';
+            resultArea.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;"></div><p style="text-align:center;margin:5px 0;font-size:12px;">AI উত্তর খুঁজছে...</p>';
+            if (activeMode === 'local') {
+                setTimeout(() => {
+                    const lines = activePrompt.split('\n');
+                    const lowerInput = input.toLowerCase();
+                    const matches = lines.filter(line => line.toLowerCase().includes(lowerInput) && line.trim() !== "");
+                    if (matches.length > 0) {
+                        const formatted = matches.map(m => { const parts = m.split('='); if(parts.length > 1) return `<b>${parts[0].trim()}</b> = ${parts.slice(1).join('=').trim()}`; return m; }).join('<br><hr style="margin:5px 0;border-top:1px solid #eee;">');
+                        resultArea.innerHTML = `<span style="color:#333;">${formatted}</span>`;
+                    } else { resultArea.innerHTML = `<span style="color:red;">ডাটাবেসে কোনো তথ্য পাওয়া যায়নি।</span>`; }
+                }, 500);
+                return;
+            }
+            if (aiConfig.apiKeys.length === 0) { alert("অ্যাডমিন প্যানেল থেকে কোনো API Key সেট করা হয়নি।"); return; }
+            const finalPrompt = `${activePrompt}\n\nUser Question/Input: ${input}`;
+            async function fetchWithRotation() {
+                let lastError = null;
+                for (let i = 0; i < aiConfig.apiKeys.length; i++) {
+                    const apiKey = aiConfig.apiKeys[i];
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${aiConfig.modelName}:generateContent?key=${apiKey}`;
+                    try {
+                        const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ "contents": [{ "parts": [{ "text": finalPrompt }] }] }) });
+                        if (response.status === 429) continue;
+                        if (!response.ok) throw new Error(`API Error`);
+                        const data = await response.json();
+                        return data;
+                    } catch (error) { lastError = error; }
+                }
+                throw lastError || new Error("All Keys exhausted");
+            }
+            try {
+                const data = await fetchWithRotation();
+                if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts) {
+                    const text = data.candidates[0].content.parts[0].text.trim();
+                    const formattedText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+                    resultArea.innerHTML = `<span style="font-weight:400; color:#333;">${formattedText}</span>`;
+                } else { throw new Error("No data found"); }
+            } catch (error) {
+                console.error("Final AI Error:", error);
+                resultArea.innerHTML = `<span style="color:red; font-size:12px;">সার্ভার ব্যস্ত অথবা লিমিট শেষ।</span>`;
+            }
+        }
+
+        function getVideoHtml(url) {
+            const ytRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+            const ytMatch = url.match(ytRegExp);
+            if (ytMatch && ytMatch[2].length === 11) {
+                const videoId = ytMatch[2];
+                return `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&loop=1&playlist=${videoId}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+            } else if (url.match(/\.(mp4|webm|ogg)$/i)) {
+                return `<video src="${url}" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:cover;"></video>`;
+            } else { return `<iframe src="${url}" style="width:100%;height:100%;border:0;" allowfullscreen></iframe>`; }
+        }
+
+        function checkAppVersion() {
+            db.collection('appStatus').doc('versionInfo').onSnapshot((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    const serverVersion = data.version;
+                    const downloadLink = data.link;
+                    const showVideo = data.showVideo || false;
+                    const videoUrl = data.videoUrl || "";
+                    if (serverVersion && serverVersion !== currentInstalledVersion) {
+                        const updateOverlay = document.getElementById('update-overlay');
+                        const mediaArea = document.getElementById('update-media-area');
+                        if (showVideo && videoUrl) { mediaArea.innerHTML = getVideoHtml(videoUrl); }
+                        else { mediaArea.innerHTML = `<div class="update-default-icon"><svg viewBox="0 0 24 24" style="width:70px;height:70px;fill:var(--primary-color);animation:bounce 2s infinite"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Zm-1,15V15H13V17H11ZM11,7V13H13V7H11Z" transform="rotate(180 12 12)"/></svg></div>`; }
+                        updateOverlay.style.display = 'flex';
+                        document.getElementById('main-app-content').style.display = 'none';
+                        document.getElementById('update-now-btn').onclick = () => { window.open(downloadLink, '_system'); };
+                    } else { document.getElementById('update-overlay').style.display = 'none'; }
+                }
+            });
+        }
+        
+        let allDisplays = [];
+        let allCategories =[];
+        const loader = document.getElementById('loader');
+        const bottomNav = document.getElementById('bottom-nav');
+        const categoryContentContainer = document.getElementById('category-content-container');
+        const whatsappContainer = document.getElementById('whatsapp-container');
+        const whatsappModal = document.getElementById('whatsapp-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const whatsappChatLink = document.getElementById('whatsapp-chat-link');
+        const whatsappGroupLink = document.getElementById('whatsapp-group-link');
+        const whatsappIconSvg = `<svg viewBox="0 0 32 32"><path d=" M19.11 17.205c-.372 0-1.088 1.39-1.518 1.39a.63.63 0 0 1-.315-.1c-.802-.402-1.504-.817-2.163-1.447-.545-.516-1.146-1.29-1.46-1.963a.426.426 0 0 1-.073-.215c0-.33.99-.945.99-1.49 0-.143-.73-2.09-.832-2.335-.143-.372-.214-.487-.6-.487-.187 0-.36-.044-.53-.044-.315 0-.76.11-1.042.315-.315.2-.6.487-.945.945-.315.44-.63.975-.63 1.612 0 .612.315 1.29.315 1.39.44.73.88 1.43 1.518 2.162.63.73 1.23 1.315 2.007 1.77.8.487 1.482.63 1.87.793.57.215 1.125.143 1.518-.2.372-.345.63-.76.945-1.21.315-.44.315-.817.214-1.043-.11-.225-.215-.315-.47-.315z M16 .043C7.16.043 0 7.202 0 16.043c0 3.022 1.043 5.87 2.76 8.26l-2.007 6.81c-.143.486.287.817.76.63l6.59-3.44c2.26.94 4.88 1.47 7.6 1.47 8.84 0 16-7.16 16-15.957C32 7.202 24.84.043 16 .043z"></path></svg>`;
+        const announcementPopup = document.getElementById('announcement-popup');
+        const announcementPopupMessage = document.getElementById('announcement-popup-message');
+        const announcementPopupClose = document.getElementById('announcement-popup-close');
+        
+        function listenForAnnouncements() {
+            announcementDoc.onSnapshot(doc => {
+                const message = doc.exists ? doc.data().message : null;
+                if (message && message.trim() !== '') { announcementPopupMessage.innerText = message; announcementPopup.style.display = 'flex'; }
+                else { announcementPopup.style.display = 'none'; }
+            }, error => console.error(error));
+        }
+
+        function setupWhatsAppButton() {
+            contactInfoDoc.get().then(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    const number = data.number;
+                    const groupLink = data.groupLink;
+                    const hasNumber = number && number.trim() !== '';
+                    const hasGroup = groupLink && groupLink.trim() !== '';
+                    if (!hasNumber && !hasGroup) return;
+                    if (hasNumber && !hasGroup) { whatsappContainer.innerHTML = `<a href="https://wa.me/${number}" target="_blank" class="whatsapp-fab">${whatsappIconSvg}</a>`; }
+                    else if (!hasNumber && hasGroup) { whatsappContainer.innerHTML = `<a href="${groupLink}" target="_blank" class="whatsapp-fab">${whatsappIconSvg}</a>`; }
+                    else {
+                        whatsappContainer.innerHTML = `<div id="whatsapp-fab-btn" class="whatsapp-fab">${whatsappIconSvg}</div>`;
+                        whatsappChatLink.href = `https://wa.me/${number}`;
+                        whatsappChatLink.style.display = 'block';
+                        whatsappGroupLink.href = groupLink;
+                        whatsappGroupLink.style.display = 'block';
+                        document.getElementById('whatsapp-fab-btn').addEventListener('click', () => { whatsappModal.style.display = 'flex'; });
+                    }
+                }
+            }).catch(error => console.error(error));
+            closeModalBtn.addEventListener('click', () => { whatsappModal.style.display = 'none'; });
+            window.addEventListener('click', (event) => { if (event.target == whatsappModal) { whatsappModal.style.display = 'none'; } });
+        }
+
+        function highlightText(text, query) {
+            if (!query) return text;
+            const regex = new RegExp(`(${query.replace(/[.\+\*?\[\^\]\$\(\)\{\}\=\!\<\>\|\:\-]/g, "\\$&")})`, 'gi');
+            return text.replace(regex, '<mark>$1</mark>');
+        }
+
+        function renderDisplays(categoryId) {
+            const container = document.getElementById(`display-list-${categoryId}`);
+            const searchBox = document.getElementById('global-search-box');
+            const noResults = document.getElementById(`no-results-${categoryId}`);
+            if (!searchBox) return;
+            const query = searchBox.value.toLowerCase().trim();
+            const filteredDisplays = allDisplays.filter(display => display.categoryId === categoryId && (display.name.toLowerCase().includes(query) || display.description.toLowerCase().includes(query)));
+            container.innerHTML = '';
+            if (filteredDisplays.length === 0 && allDisplays.some(d => d.categoryId === categoryId)) { noResults.style.display = 'flex'; }
+            else { noResults.style.display = 'none'; }
+            filteredDisplays.forEach(display => {
+                const card = document.createElement('div');
+                card.className = 'display-card';
+                const highlightedName = highlightText(display.name, query);
+                const highlightedDesc = highlightText(display.description, query);
+                card.innerHTML = `<div class="card-image-container"><img src="${display.image}" alt="${display.name}" loading="lazy"></div><div class="display-card-content"><h3>${highlightedName}</h3>${display.company ? `<div style="display:inline-block; background:rgba(0,113,227,0.08); color:#0071e3; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600; margin-bottom:6px; letter-spacing:0.3px;">${display.company}</div>` : ''}<p>${highlightedDesc}</p></div>`;
+                container.appendChild(card);
+            });
+        }
+        
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), delay); };
+        }
+
+        function setupCategoryView(category) {
+            const categoryContent = document.createElement('div');
+            categoryContent.id = `category-content-${category.id}`;
+            categoryContent.className = 'category-content';
+            categoryContent.innerHTML = `<div id="display-list-${category.id}" class="display-list"></div><div id="no-results-${category.id}" class="no-results"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d1d6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><p style="margin-top:15px; font-weight:500;">দুঃখিত, কোনো ফলাফল পাওয়া যায়নি।</p></div>`;
+            categoryContentContainer.appendChild(categoryContent);
+        }
+
+        function switchCategory(categoryId) {
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            document.querySelector(`.nav-item[data-id="${categoryId}"]`)?.classList.add('active');
+            document.querySelectorAll('.category-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(`category-content-${categoryId}`).classList.add('active');
+            document.getElementById('ai-view-container').style.display = 'none';
+            document.getElementById('hw-view-container').style.display = 'none';
+            const searchContainer = document.getElementById('global-search-container');
+            if(searchContainer) searchContainer.style.display = 'flex';
+            renderDisplays(categoryId);
+            window.scrollTo(0,0);
+        }
+
+        function buildNavAndViews() {
+            bottomNav.innerHTML = '';
+            categoryContentContainer.innerHTML = '';
+            const searchBox = document.getElementById('global-search-box');
+            const clearSearchBtn = document.getElementById('global-clear-search-btn');
+            if (searchBox && clearSearchBtn) {
+                const debouncedFilter = debounce(() => { const activeNav = document.querySelector('.nav-item.active:not(.ai-nav-item)'); if (activeNav) { renderDisplays(activeNav.dataset.id); } }, 300);
+                searchBox.addEventListener('input', () => { clearSearchBtn.style.display = (searchBox.value.length > 0) ? 'flex' : 'none'; debouncedFilter(); });
+                clearSearchBtn.addEventListener('click', () => { searchBox.value = ''; clearSearchBtn.style.display = 'none'; const activeNav = document.querySelector('.nav-item.active:not(.ai-nav-item)'); if (activeNav) { renderDisplays(activeNav.dataset.id); } searchBox.focus(); });
+            }
+            const sortedCategories = allCategories.sort((a, b) => a.order - b.order);
+            const midPoint = Math.ceil(sortedCategories.length / 2);
+            const aiNavHtml = `<div class="nav-item ai-nav-item" onclick="switchToAI()"><div class="ai-icon-circle"><svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Zm-1,15V15H13V17H11ZM11,7V13H13V7H11Z"/></svg></div><span>AI Tools</span></div>`;
+            const hardwareNavHtml = `<div class="nav-item hw-nav-item ${!isPremium ? 'locked' : ''}" onclick="switchToHardware()"><i class="fas fa-microchip" style="font-size: 22px;"></i><span>Hardware</span></div>`;
+            sortedCategories.forEach((category, index) => {
+                if (index === midPoint) { const aiWrapper = document.createElement('div'); aiWrapper.innerHTML = aiNavHtml; bottomNav.appendChild(aiWrapper.firstElementChild); }
+                const navItem = document.createElement('div'); navItem.className = 'nav-item'; navItem.dataset.id = category.id;
+                const iconContent = category.icon && category.icon.trim().startsWith('<svg') ? category.icon : `<img src="${category.icon || ''}" alt="${category.name}">`;
+                navItem.innerHTML = `${iconContent}<span>${category.name}</span>`;
+                navItem.addEventListener('click', () => switchCategory(category.id));
+                bottomNav.appendChild(navItem);
+                setupCategoryView(category);
+            });
+            if (sortedCategories.length <= 1 && !document.querySelector('.ai-nav-item')) { const aiWrapper = document.createElement('div'); aiWrapper.innerHTML = aiNavHtml; bottomNav.appendChild(aiWrapper.firstElementChild); }
+            const hwWrapper = document.createElement('div'); hwWrapper.innerHTML = hardwareNavHtml; bottomNav.appendChild(hwWrapper.firstElementChild);
+            if (sortedCategories.length > 0) { switchCategory(sortedCategories[0].id); }
+        }
+
+        async function loadInitialData() {
+            loader.style.display = 'block';
+            try {
+                const catSnapshot = await categoriesCollection.get();
+                allCategories =[];
+                catSnapshot.forEach(doc => { allCategories.push({ id: doc.id, ...doc.data() }); });
+                let isUserPremium = false;
+                const adminUID = "okQT7WfDKjhGxNsYcB7b8h3i76x2";
+                if (currentUser) {
+                    const userDoc = await db.collection('users').doc(currentUser.uid).get();
+                    const userData = userDoc.data();
+                    const now = new Date();
+                    const expiry = userData?.planExpiry ? userData.planExpiry.toDate() : new Date(0);
+                    isUserPremium = (userData?.subscriptionStatus === 'active' && expiry > now) || (currentUser.uid === adminUID);
+                }
+                let query;
+                const searchBox = document.getElementById('global-search-box');
+                const lockOverlay = document.getElementById('search-lock-overlay');
+                if (isUserPremium) {
+                    query = displaysCollection; 
+                    if(searchBox) { searchBox.removeAttribute('readonly'); searchBox.placeholder = "মডেল খুঁজুন..."; }
+                    if(lockOverlay) lockOverlay.remove();
+                } else {
+                    query = displaysCollection.orderBy('createdAt', 'desc');
+                    if(searchBox) { searchBox.setAttribute('readonly', true); searchBox.placeholder = "Search (Premium) 🔒"; }
+                }
+                const displaySnapshot = await query.get();
+                allDisplays =[];
+                displaySnapshot.forEach(doc => { allDisplays.push({ id: doc.id, ...doc.data() }); });
+                allDisplays.sort((a, b) => { const dateA = a.createdAt ? a.createdAt.seconds : 0; const dateB = b.createdAt ? b.createdAt.seconds : 0; return dateB - dateA; });
+                buildNavAndViews();
+                if (allCategories.length > 0) { const firstCat = allCategories.sort((a, b) => a.order - b.order)[0]; renderDisplays(firstCat.id); }
+            } catch (error) {
+                console.error("Error fetching data: ", error);
+                if (error.code === 'permission-denied') { alert("Security Alert: Data access denied."); }
+                else { categoryContentContainer.innerHTML = '<p style="text-align:center;">ডেটা লোড করতে সমস্যা হয়েছে।</p>'; }
+            } finally { loader.style.display = 'none'; }
+        }
+        
+        function initializeApp() {
+            const today = new Date().toLocaleDateString('en-CA');
+            const lastVisit = localStorage.getItem('daily_visit_date');
+            if (lastVisit !== today) {
+                const statsRef = db.collection('daily_stats').doc(today);
+                statsRef.set({ date: today, count: firebase.firestore.FieldValue.increment(1), lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true })
+                .then(() => { localStorage.setItem('daily_visit_date', today); console.log("Daily visit counted."); })
+                .catch(err => console.error("Error counting visit: ", err));
+            }
+            listenForAnnouncements();
+            setupWhatsAppButton();
+            loadInitialData();
+            announcementPopupClose.addEventListener('click', () => { announcementPopup.style.display = 'none'; });
+            announcementPopup.addEventListener('click', (event) => { if (event.target === announcementPopup) { announcementPopup.style.display = 'none'; } });
+        }
+
+        // ========== HARDWARE MODULE FUNCTIONS with search and highlight ==========
+        let hwBrands = [];
+        let hwModels = [];
+        let hwDiagrams = [];
+        let currentBrandId = null;
+        let currentModelId = null;
+        let hwSearchTerm = '';
+        let hwModelSearchTerm = '';
+
+        hwBrandsCol.orderBy('order').onSnapshot(snapshot => {
+            hwBrands = [];
+            snapshot.forEach(doc => hwBrands.push({ id: doc.id, ...doc.data() }));
+            if (document.getElementById('hw-brands-view').style.display !== 'none') {
+                renderHardwareBrands();
+            }
+        });
+        hwModelsCol.onSnapshot(snapshot => {
+            hwModels = [];
+            snapshot.forEach(doc => hwModels.push({ id: doc.id, ...doc.data() }));
+            if (currentBrandId && document.getElementById('hw-models-view').style.display !== 'none') {
+                renderHardwareModels(currentBrandId);
+            }
+        });
+        hwDiagramsCol.onSnapshot(snapshot => {
+            hwDiagrams = [];
+            snapshot.forEach(doc => hwDiagrams.push({ id: doc.id, ...doc.data() }));
+            if (currentModelId && document.getElementById('hw-diagrams-view').style.display !== 'none') {
+                renderHardwareDiagrams(currentModelId);
+            }
+        });
+
+        function highlightBrandName(name, searchTerm) {
+            if (!searchTerm) return name;
+            const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            return name.replace(regex, '<mark>$1</mark>');
+        }
+
+        function renderHardwareBrands() {
+            const grid = document.getElementById('hw-brands-grid');
+            if (!grid) return;
+            const searchTerm = hwSearchTerm.trim().toLowerCase();
+            const filtered = hwBrands.filter(brand => brand.name.toLowerCase().includes(searchTerm));
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div class="hw-empty">কোনো ব্র্যান্ড পাওয়া যায়নি।</div>';
+                return;
+            }
+            grid.innerHTML = '';
+            filtered.forEach(brand => {
+                const card = document.createElement('div');
+                card.className = 'hw-brand-card';
+                const highlightedName = highlightBrandName(brand.name, searchTerm);
+                card.innerHTML = `<img src="${brand.logo || 'https://cdn-icons-png.flaticon.com/512/2103/2103832.png'}" alt="${brand.name}"><span>${highlightedName}</span>`;
+                card.onclick = () => {
+                    currentBrandId = brand.id;
+                    hwModelSearchTerm = '';
+                    const ms = document.getElementById('hw-model-search');
+                    if (ms) ms.value = '';
+                    showHardwareModels();
+                };
+                grid.appendChild(card);
+            });
+        }
+
+        function renderHardwareModels(brandId) {
+            const grid = document.getElementById('hw-models-grid');
+            if (!grid) return;
+            const searchTerm = hwModelSearchTerm.trim().toLowerCase();
+            const filtered = hwModels.filter(m => m.brandId === brandId && m.modelName.toLowerCase().includes(searchTerm));
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div class="hw-empty">এই ব্র্যান্ডের কোনো মডেল নেই।</div>';
+                return;
+            }
+            grid.innerHTML = '';
+            filtered.forEach(model => {
+                const card = document.createElement('div');
+                card.className = 'hw-model-card';
+                const highlightedName = highlightBrandName(model.modelName, searchTerm);
+                card.innerHTML = `<i class="fas fa-mobile-alt" style="font-size: 40px; color: var(--primary-color); margin-bottom: 12px;"></i><span>${highlightedName}</span>`;
+                card.onclick = () => {
+                    currentModelId = model.id;
+                    showHardwareDiagrams();
+                };
+                grid.appendChild(card);
+            });
+        }
+
+        function renderHardwareDiagrams(modelId) {
+            const container = document.getElementById('hw-diagrams-list');
+            if (!container) return;
+            const filtered = hwDiagrams.filter(d => d.modelId === modelId);
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="hw-empty">এই মডেলের জন্য কোনো ডায়াগ্রাম নেই।</div>';
+                return;
+            }
+            container.innerHTML = '';
+            filtered.forEach(diagram => {
+                const item = document.createElement('div');
+                item.className = 'hw-diagram-item';
+                const url = diagram.imageUrl || '';
+                const isPdf = url.toLowerCase().split('?')[0].endsWith('.pdf');
+                let contentHtml = '';
+                if (isPdf) {
+                    contentHtml = `<div class="hw-diagram-content" onclick="openImageZoom('${url}')" style="background:#f2f2f7; padding:20px; border-radius:12px; display:flex; flex-direction:column; align-items:center; gap:10px;"><i class="fas fa-file-pdf" style="font-size:40px; color:var(--primary-color);"></i><span style="font-weight:600; color:#333;">PDF ডায়াগ্রাম দেখুন (Tap)</span></div>`;
+                } else {
+                    contentHtml = `<div class="hw-diagram-content"><img src="${url || 'https://via.placeholder.com/300?text=No+Image'}" alt="${diagram.title}" onclick="openImageZoom('${url}')"></div>`;
+                }
+                item.innerHTML = `
+                    <div class="hw-diagram-title">${diagram.title}</div>
+                    ${contentHtml}
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        window.switchToHardware = function() {
+            if (!isPremium) {
+                openPaymentModal();
+                return;
+            }
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            const hwNav = document.querySelector('.hw-nav-item');
+            if (hwNav) hwNav.classList.add('active');
+            document.querySelectorAll('.category-content').forEach(content => content.classList.remove('active'));
+            document.getElementById('ai-view-container').style.display = 'none';
+            document.getElementById('hw-view-container').style.display = 'block';
+            const searchContainer = document.getElementById('global-search-container');
+            if(searchContainer) searchContainer.style.display = 'none';
+            showHardwareBrands();
+            window.scrollTo(0,0);
+        };
+
+        function showHardwareBrands() {
+            document.getElementById('hw-brands-view').style.display = 'block';
+            document.getElementById('hw-models-view').style.display = 'none';
+            document.getElementById('hw-diagrams-view').style.display = 'none';
+            currentBrandId = null;
+            currentModelId = null;
+            renderHardwareBrands();
+        }
+
+        function showHardwareModels() {
+            if (!currentBrandId) return;
+            document.getElementById('hw-brands-view').style.display = 'none';
+            document.getElementById('hw-models-view').style.display = 'block';
+            document.getElementById('hw-diagrams-view').style.display = 'none';
+            renderHardwareModels(currentBrandId);
+        }
+
+        function showHardwareDiagrams() {
+            if (!currentModelId) return;
+            document.getElementById('hw-brands-view').style.display = 'none';
+            document.getElementById('hw-models-view').style.display = 'none';
+            document.getElementById('hw-diagrams-view').style.display = 'block';
+            renderHardwareDiagrams(currentModelId);
+        }
+
+        const hwBrandSearch = document.getElementById('hw-brand-search');
+        if (hwBrandSearch) {
+            hwBrandSearch.addEventListener('input', (e) => {
+                hwSearchTerm = e.target.value;
+                renderHardwareBrands();
+            });
+        }
+
+        const hwModelSearch = document.getElementById('hw-model-search');
+        if (hwModelSearch) {
+            hwModelSearch.addEventListener('input', (e) => {
+                hwModelSearchTerm = e.target.value;
+                if (currentBrandId) renderHardwareModels(currentBrandId);
+            });
+        }
+
+        // Fullscreen Native Zoom & Pan Modal
+        window.openImageZoom = function(url) {
+            if (!url) return;
+            const modal = document.getElementById('image-zoom-modal');
+            const zoomContent = document.getElementById('zoom-content');
+            
+            history.pushState({ modalOpen: true }, "");
+            document.getElementById('main-app-content').style.display = 'none';
+            document.getElementById('viewport-meta').setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover');
+
+            const isPdf = url.toLowerCase().split('?')[0].endsWith('.pdf');
+
+            if (isPdf) {
+                zoomContent.innerHTML = `
+                    <div id="pdf-loading" style="color:black; font-weight:600; font-size:16px; margin-top: 50px;">ডায়াগ্রাম লোড হচ্ছে, দয়া করে অপেক্ষা করুন...</div>
+                    <div id="pdf-pages-container" style="display: flex; flex-direction: column; width: 100%; align-items: center;"></div>
+                `;
+                modal.style.display = 'block';
+                window.scrollTo(0, 0);
+
+                const loadingTask = pdfjsLib.getDocument(url);
+                loadingTask.promise.then(async function(pdf) {
+                    const container = document.getElementById('pdf-pages-container');
+                    if (!container) return; 
+                    const scale = 2.5; 
+
+                    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                        const page = await pdf.getPage(pageNum);
+                        const viewport = page.getViewport({scale: scale});
+                        
+                        const canvas = document.createElement('canvas');
+                        canvas.style.width = '100%';
+                        canvas.style.height = 'auto';
+                        canvas.style.display = 'block';
+                        canvas.style.marginBottom = '-1px';
+                        
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
+                        
+                        container.appendChild(canvas);
+
+                        const renderContext = {
+                            canvasContext: canvas.getContext('2d'),
+                            viewport: viewport
+                        };
+                        
+                        await page.render(renderContext).promise;
+                    }
+                    
+                    const loadingMsg = document.getElementById('pdf-loading');
+                    if(loadingMsg) loadingMsg.style.display = 'none';
+
+                }).catch(function(error) {
+                    const loadingMsg = document.getElementById('pdf-loading');
+                    if(loadingMsg) loadingMsg.innerText = "PDF লোড করতে সমস্যা হয়েছে।";
+                    console.error("PDF Load Error:", error);
+                });
+
+            } else {
+                zoomContent.innerHTML = `<img id="zoom-img" src="${url}" alt="Zoom" style="width:100%; height:auto;">`;
+                modal.style.display = 'block';
+                window.scrollTo(0, 0);
+            }
+        };
+
+        window.closeImageZoom = function(isPopState) {
+            const modal = document.getElementById('image-zoom-modal');
+            const zoomContent = document.getElementById('zoom-content');
+            zoomContent.innerHTML = '';
+            modal.style.display = 'none';
+            
+            document.getElementById('main-app-content').style.display = 'block';
+            document.getElementById('viewport-meta').setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+
+            if (isPopState !== true && history.state && history.state.modalOpen) {
+                history.back();
+            }
+        };
+
+        window.addEventListener('popstate', function(event) {
+            const modal = document.getElementById('image-zoom-modal');
+            if (modal && modal.style.display === 'block') {
+                window.closeImageZoom(true);
+            }
+        });
+    </script>
+</body>
+</html>
