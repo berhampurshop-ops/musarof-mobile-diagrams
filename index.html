@@ -235,10 +235,10 @@
 
     <!-- Magic Background Waiting Overlay -->
     <div id="waiting-overlay">
-        <div class="spinner" style="width: 50px; height: 50px; border-width: 4px;"></div>
-        <h3 style="margin-top: 25px; color: var(--primary-color);">পেমেন্ট চেক করা হচ্ছে...</h3>
-        <p style="color: #666; font-size: 14px; font-weight: 500; text-align: center; margin: 10px 20px; line-height: 1.6;">ব্রাউজারে পেমেন্ট শেষ করে এই অ্যাপে ফিরে আসুন।<br>পেমেন্ট সফল হলে অ্যাপ নিজে থেকেই আনলক হয়ে যাবে!</p>
-        <button onclick="cancelWaiting()" style="margin-top: 25px; padding: 12px 30px; background: #f2f2f7; color: #333; border: none; border-radius: 12px; font-weight: 600; cursor: pointer;">ক্যান্সেল করুন</button>
+        <div class="spinner" id="waiting-spinner" style="width: 50px; height: 50px; border-width: 4px;"></div>
+        <h3 id="waiting-title" style="margin-top: 25px; color: var(--primary-color);">পেমেন্ট চেক করা হচ্ছে...</h3>
+        <p id="waiting-desc" style="color: #666; font-size: 14px; font-weight: 500; text-align: center; margin: 10px 20px; line-height: 1.6;">ব্রাউজারে পেমেন্ট শেষ করে এই পেজেই ফিরে আসুন।<br>পেমেন্ট সফল হলে আপনার অ্যাপটি নিজে থেকেই আনলক হয়ে যাবে!</p>
+        <button id="waiting-cancel-btn" onclick="cancelWaiting()" style="margin-top: 25px; padding: 12px 30px; background: #f2f2f7; color: #333; border: none; border-radius: 12px; font-weight: 600; cursor: pointer;">ক্যান্সেল করুন</button>
     </div>
 
     <div id="payment-modal" class="payment-modal">
@@ -371,7 +371,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     
     <script>
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyFqIyHARgIkzv_NUgmzNGv0myRFeUAvH6x2lLMNPVcX0fyeipUsJiR2gNU2GjCwKNy/exec";
+        // 🌟 UPDATE: New Apps Script URL provided by you
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzW-FhoIFfBEJifMyWNJ1BYe1KUAn4agfP-MCrI36XgGDQnXK4yrnIKoAW7GT-TW7k9/exec";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCc1tsd9a_Uf_x0guHOD61VwinSeOBSM_M",
@@ -393,7 +394,6 @@
         const usersCollection = db.collection('users');
         const paymentInfoDoc = db.collection('appStatus').doc('paymentInfo');
         
-        // Hardware collections
         const hwBrandsCol = db.collection('hw_brands');
         const hwModelsCol = db.collection('hw_models');
         const hwDiagramsCol = db.collection('hw_diagrams');
@@ -457,18 +457,6 @@
                 authOverlay.style.display = 'none';
                 mainContent.style.display = 'block';
                 currentUser = user;
-                
-                // === Handle pure web redirects just in case (fallback) ===
-                const params = new URLSearchParams(window.location.search);
-                if (params.get('order_id')) {
-                    const pendingPlan = localStorage.getItem('pending_payment');
-                    if (pendingPlan) {
-                        activatePremiumSubscription(pendingPlan);
-                        alert("✅ পেমেন্ট সফল হয়েছে! আপনার অ্যাকাউন্ট আনলক করা হয়েছে।");
-                        localStorage.removeItem('pending_payment');
-                    }
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                }
                 
                 const name = user.displayName || 'User';
                 document.getElementById('user-name').innerText = name.split(' ')[0];
@@ -571,7 +559,11 @@
         let selectedPlanType = '7days';
         let currentWeeklyPrice = 50;
         let currentMonthlyPrice = 150;
+        
         let paymentPollInterval;
+        let activeOrderId = null;
+        let activePlanType = null;
+        let isPaymentSuccess = false;
 
         window.openPaymentModal = function() {
             const modal = document.getElementById('payment-modal');
@@ -606,6 +598,7 @@
             submitBtn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;border-top-color:#fff;"></div> প্রসেস হচ্ছে...';
             
             try {
+                // Sending request to Apps Script (Which will fall to the 'create order' section)
                 const response = await fetch(APPS_SCRIPT_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -629,28 +622,16 @@
                 }
                 
                 if(orderData && orderData.payment_session_id && orderData.order_id) {
-                    // 1. Start Auto-Verification in Background
+                    // Start Background Polling
                     startPaymentPolling(orderData.order_id, selectedPlanType);
                     
-                    // 2. Open Cashfree Page (WebView will catch this and open in External Chrome)
-                    if (typeof Cashfree !== 'undefined') {
-                        const cashfree = Cashfree({ mode: "production" }); 
-                        cashfree.checkout({
-                            paymentSessionId: orderData.payment_session_id,
-                            redirectTarget: "_self" 
-                        });
-                    } else {
-                        let script = document.createElement('script');
-                        script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
-                        script.onload = function() {
-                            const cashfree = Cashfree({ mode: "production" }); 
-                            cashfree.checkout({
-                                paymentSessionId: orderData.payment_session_id,
-                                redirectTarget: "_self" 
-                            });
-                        };
-                        document.head.appendChild(script);
-                    }
+                    // Trigger Checkout (Sketchware will catch this URL and open Chrome automatically)
+                    const cashfree = Cashfree({ mode: "production" }); 
+                    cashfree.checkout({
+                        paymentSessionId: orderData.payment_session_id,
+                        redirectTarget: "_self" 
+                    });
+                    
                 } else {
                     alert("পেমেন্ট সেশন তৈরি হয়নি!");
                     resetPayButton(submitBtn);
@@ -666,17 +647,25 @@
             btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Pay Now';
         }
 
-        // --- Auto Verification System with Timeout & Auto-Cancel ---
+        // --- Auto Verification System ---
         function startPaymentPolling(orderId, planType) {
             document.getElementById('payment-modal').style.display = 'none';
             document.getElementById('waiting-overlay').style.display = 'flex';
+            
+            // Set details so App Resume can use them
+            activeOrderId = orderId;
+            activePlanType = planType;
+            isPaymentSuccess = false;
 
             let pollCount = 0; 
             
+            if(paymentPollInterval) clearInterval(paymentPollInterval);
+
             paymentPollInterval = setInterval(async () => {
+                if(isPaymentSuccess) return;
                 pollCount++;
                 
-                // Timeout after 10 minutes (200 checks * 3 sec)
+                // Timeout after approx 10 minutes
                 if(pollCount > 200) { 
                     clearInterval(paymentPollInterval);
                     document.getElementById('waiting-overlay').style.display = 'none';
@@ -685,43 +674,64 @@
                     return;
                 }
                 
-                try {
-                    const response = await fetch(APPS_SCRIPT_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({ action: "verify", order_id: orderId })
-                    });
-                    const orderStatusData = await response.json();
-                    
-                    if (orderStatusData && orderStatusData.order_status) {
-                        
-                        if (orderStatusData.order_status === "PAID") {
-                            // Payment Success
-                            clearInterval(paymentPollInterval);
-                            document.getElementById('waiting-overlay').style.display = 'none';
-                            activatePremiumSubscription(planType);
-                            alert("✅ পেমেন্ট সফল হয়েছে! আপনার অ্যাকাউন্ট আনলক করা হয়েছে।");
-                            resetPayButton(document.querySelector('.submit-pay-btn'));
-                            
-                        } else if (orderStatusData.order_status === "FAILED" || orderStatusData.order_status === "USER_DROPPED" || orderStatusData.order_status === "VOID" || orderStatusData.order_status === "CANCELLED") {
-                            // Payment Failed or Dropped
-                            clearInterval(paymentPollInterval);
-                            document.getElementById('waiting-overlay').style.display = 'none';
-                            alert("❌ পেমেন্ট বাতিল বা ব্যর্থ হয়েছে!");
-                            resetPayButton(document.querySelector('.submit-pay-btn'));
-                        }
-                    }
-                } catch(e) {
-                    // Silently fail and retry
-                }
+                await verifyOrderAPI(orderId, planType);
+                
             }, 3000); 
         }
 
+        // The actual Verification API Call
+        async function verifyOrderAPI(orderId, planType) {
+            try {
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: "verify", order_id: orderId })
+                });
+                const orderStatusData = await response.json();
+                
+                if (orderStatusData && orderStatusData.order_status) {
+                    if (orderStatusData.order_status === "PAID") {
+                        // Success!
+                        isPaymentSuccess = true;
+                        clearInterval(paymentPollInterval);
+                        
+                        document.getElementById('waiting-spinner').style.display = 'none';
+                        document.getElementById('waiting-title').innerText = "✅ পেমেন্ট সফল হয়েছে!";
+                        document.getElementById('waiting-title').style.color = "#25D366";
+                        document.getElementById('waiting-desc').innerText = "আপনার অ্যাকাউন্ট সফলভাবে আনলক করা হয়েছে।";
+                        document.getElementById('waiting-cancel-btn').style.display = 'none';
+                        
+                        activatePremiumSubscription(planType);
+                        
+                        setTimeout(() => {
+                            document.getElementById('waiting-overlay').style.display = 'none';
+                            resetPayButton(document.querySelector('.submit-pay-btn'));
+                        }, 2000);
+                        
+                    }
+                }
+            } catch(e) {
+                console.log("Waiting for payment...");
+            }
+        }
+
+        // 🌟 MAGIC SYSTEM: When user closes external browser and returns to App!
+        document.addEventListener("visibilitychange", () => {
+            // App comes back to the foreground
+            if (document.visibilityState === "visible") {
+                if (activeOrderId && !isPaymentSuccess) {
+                    // Instantly check the payment status right now!
+                    verifyOrderAPI(activeOrderId, activePlanType);
+                }
+            }
+        });
+
         window.cancelWaiting = function() {
-            clearInterval(paymentPollInterval);
+            if(paymentPollInterval) clearInterval(paymentPollInterval);
             document.getElementById('waiting-overlay').style.display = 'none';
             const btn = document.querySelector('.submit-pay-btn');
             if(btn) resetPayButton(btn);
+            activeOrderId = null;
         }
         
         function activatePremiumSubscription(planType) {
@@ -1058,7 +1068,7 @@
             announcementPopup.addEventListener('click', (event) => { if (event.target === announcementPopup) { announcementPopup.style.display = 'none'; } });
         }
 
-        // ========== HARDWARE MODULE FUNCTIONS with search and highlight ==========
+        // ========== HARDWARE MODULE FUNCTIONS ==========
         let hwBrands = [];
         let hwModels = [];
         let hwDiagrams = [];
@@ -1230,7 +1240,7 @@
             });
         }
 
-        // Fullscreen Native Zoom & Pan Modal
+        // Fullscreen Native Zoom
         window.openImageZoom = function(url) {
             if (!url) return;
             const modal = document.getElementById('image-zoom-modal');
