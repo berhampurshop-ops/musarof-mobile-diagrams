@@ -13,9 +13,6 @@
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
     </script>
-    
-    <!-- Cashfree SDK -->
-    <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
     <style>
         /* --- Premium App-Like CSS --- */
@@ -33,12 +30,10 @@
         .auth-btn:active { opacity: 0.8; }
         .toggle-link { color: var(--primary-color); font-weight: 600; cursor: pointer; font-size: 13px; }
 
-        /* NEW: Password Wrapper & Eye Icon */
         .password-wrapper { position: relative; margin-bottom: 12px; width: 100%; }
         .password-wrapper .auth-input { margin-bottom: 0; padding-right: 45px; }
         .toggle-password { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #888; cursor: pointer; font-size: 16px; padding: 5px; }
         
-        /* NEW: Phone Input Group (Country Code) */
         .phone-input-group { display: flex; gap: 8px; margin-bottom: 12px; width: 100%; }
         .country-select { width: 35%; padding: 14px 5px; border: 1px solid #e5e5ea; border-radius: 12px; font-size: 13px; background: #f9f9f9; outline: none; font-family: 'Poppins', sans-serif; transition: 0.3s; }
         .phone-input { width: 65%; padding: 14px; border: 1px solid #e5e5ea; border-radius: 12px; font-size: 14px; background: #f9f9f9; outline: none; font-family: 'Poppins', sans-serif; transition: 0.3s; margin-bottom: 0; }
@@ -58,12 +53,9 @@
         .plan-info strong { font-size: 16px; color: #1c1c1e; font-weight: 700; display: block; margin-bottom: 2px; }
         .plan-info small { font-size: 12px; color: #8e8e93; }
         .plan-price { font-size: 18px; color: var(--primary-color); font-weight: 700; }
-        .pay-input { width: 100%; padding: 16px; margin-bottom: 12px; border: none; border-radius: 14px; font-size: 14px; background: #f2f2f7; outline: none; color: #1c1c1e; font-weight: 500; transition: 0.3s; }
-        .pay-input:focus { background: #e5e5ea; }
         .submit-pay-btn { background: var(--primary-color); color: white; border: none; width: 100%; padding: 16px; border-radius: 16px; font-size: 16px; font-weight: 600; margin-top: 10px; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 113, 227, 0.3); display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.1s; }
         .submit-pay-btn:active { transform: scale(0.98); }
 
-        #waiting-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; z-index: 999999; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
         .user-status-bar { background: white; padding: 12px 15px; border-radius: 14px; margin: 10px auto; max-width: 800px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); font-size: 13px; }
         .status-badge { padding: 5px 12px; border-radius: 20px; font-weight: 600; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 5px; }
         .status-free { background: #f2f2f7; color: #555; }
@@ -188,7 +180,6 @@
         .close-zoom { position: fixed; top: 20px; right: 20px; color: white; font-size: 28px; cursor: pointer; background: rgba(0,0,0,0.6); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 20001; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: 0.2s; }
         .close-zoom:hover { background: rgba(0,0,0,0.9); transform: scale(1.05); }
 
-        /* NEW: Universal IC List Styles */
         .sticky-ic-header { position: sticky; top: 0; background: var(--bg-color); z-index: 100; padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.05); margin-bottom: 15px; }
         
         .ic-item-card { background: #fff; border-radius: 16px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); display: flex; gap: 15px; align-items: flex-start; margin-bottom: 15px; border: 1px solid #d1d1d6; transition: transform 0.2s; }
@@ -259,14 +250,6 @@
         <button onclick="handleLogout()" style="padding: 10px 25px; border:none; background:#f2f2f7; border-radius:12px; font-weight: 600; color: #333;">Log Out</button>
     </div>
 
-    <!-- Waiting Overlay -->
-    <div id="waiting-overlay">
-        <div class="spinner" id="waiting-spinner" style="width: 50px; height: 50px; border-width: 4px;"></div>
-        <h3 id="waiting-title" style="margin-top: 25px; color: var(--primary-color);">পেমেন্ট চেক করা হচ্ছে...</h3>
-        <p id="waiting-desc" style="color: #666; font-size: 14px; font-weight: 500; text-align: center; margin: 10px 20px; line-height: 1.6;">অনুগ্রহ করে একটু অপেক্ষা করুন।</p>
-        <button id="waiting-cancel-btn" onclick="cancelWaiting()" style="display:none; margin-top: 25px; padding: 12px 30px; background: #f2f2f7; color: #333; border: none; border-radius: 12px; font-weight: 600; cursor: pointer;">ক্যান্সেল করুন</button>
-    </div>
-
     <div id="payment-modal" class="payment-modal">
         <div class="payment-box">
             <div class="close-btn-round" onclick="closePaymentModal()"><i class="fa-solid fa-xmark"></i></div>
@@ -284,10 +267,19 @@
                     <div class="plan-price" id="monthly-price-text">₹150</div>
                 </div>
             </div>
-            <div style="text-align: left; margin-top: 15px;">
-                <input type="number" id="payment-phone" class="pay-input" placeholder="Your Phone Number (For Verification)">
+            
+            <!-- Manual Payment Section -->
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 16px; margin-bottom: 15px; border: 1px dashed #d1d1d6;">
+                <p style="font-size: 13px; color: #555; margin: 0 0 10px; font-weight: 600;">স্ক্যান করে পেমেন্ট করুন</p>
+                <img id="upi-qr-image" src="https://via.placeholder.com/150?text=QR+Code" alt="QR Code" style="width: 150px; height: 150px; border-radius: 12px; margin-bottom: 10px; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                <div style="background: #fff; padding: 10px 12px; border-radius: 12px; font-size: 14px; font-weight: 600; color: #333; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e5e5ea;">
+                    <span id="upi-id-text">your_upi@okbank</span>
+                    <i class="fa-regular fa-copy" onclick="copyUPI()" style="color: var(--primary-color); cursor: pointer; font-size: 18px;"></i>
+                </div>
+                <p style="font-size: 11px; color: #888; margin: 10px 0 0; line-height: 1.4;">পেমেন্ট সম্পূর্ণ হলে নিচের বাটনে ক্লিক করে WhatsApp-এ স্ক্রিনশট পাঠান।</p>
             </div>
-            <button onclick="submitPayment()" class="submit-pay-btn"><i class="fa-solid fa-credit-card"></i> Pay Now</button>
+
+            <button onclick="submitPaymentWhatsApp()" class="submit-pay-btn" style="background: #25D366; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);"><i class="fa-brands fa-whatsapp" style="font-size: 20px;"></i> Pay & Send via WhatsApp</button>
         </div>
     </div>
 
@@ -345,14 +337,12 @@
             <div id="hw-view-container">
                 <div class="hw-header-inline">
                     <h2>Hardware Solutions</h2>
-                    <!-- NEW: Tabs for Borneo and Universal IC -->
                     <div class="hw-tabs">
                         <button class="hw-tab-btn active" id="tab-borneo" onclick="switchHwTab('borneo')">ডায়াগ্রাম (Borneo)</button>
                         <button class="hw-tab-btn" id="tab-ic" onclick="switchHwTab('ic')">ইউনিভার্সাল IC</button>
                     </div>
                 </div>
 
-                <!-- Borneo Wrapper -->
                 <div id="hw-borneo-wrapper">
                     <div id="hw-brands-view">
                         <div class="hw-search-container">
@@ -373,7 +363,6 @@
                     </div>
                 </div>
 
-                <!-- NEW: Universal IC Wrapper -->
                 <div id="hw-ic-wrapper" style="display:none;">
                     <div id="hw-ic-categories-view">
                         <div id="hw-ic-categories-grid" class="hw-grid"><div class="spinner"></div></div>
@@ -426,8 +415,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     
     <script>
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzW-FhoIFfBEJifMyWNJ1BYe1KUAn4agfP-MCrI36XgGDQnXK4yrnIKoAW7GT-TW7k9/exec";
-
         const firebaseConfig = {
             apiKey: "AIzaSyCc1tsd9a_Uf_x0guHOD61VwinSeOBSM_M",
             authDomain: "musarof-mobile.firebaseapp.com",
@@ -451,7 +438,6 @@
         const hwModelsCol = db.collection('hw_models');
         const hwDiagramsCol = db.collection('hw_diagrams');
         
-        // NEW IC Collections
         const hwIcCategoriesCol = db.collection('hw_ic_categories');
         const hwIcListCol = db.collection('hw_ic_list');
         
@@ -468,7 +454,11 @@
             localStorage.setItem('device_id', currentDeviceId);
         }
 
-        // === AUTH LOGIC ===
+        // WhatsApp Payment Config Fallbacks
+        window.adminWhatsapp = "919876543210"; // ডিফল্ট নম্বর (আপনার নম্বরে পরিবর্তন করতে পারেন)
+        window.currentUpiId = "admin@ybl";
+        window.currentQrUrl = "https://via.placeholder.com/200?text=Scan+QR+Code";
+
         window.toggleAuth = function(mode) {
             document.getElementById('auth-error-msg').innerText = "";
             if(mode === 'signup') {
@@ -533,33 +523,6 @@
                 authOverlay.style.display = 'none';
                 mainContent.style.display = 'block';
                 currentUser = user;
-                
-                // 🌟 SMART VERIFICATION: Check if user just returned from Cashfree Payment!
-                const pendingOrderId = localStorage.getItem('pending_order_id');
-                const pendingPlan = localStorage.getItem('pending_plan');
-                
-                if (pendingOrderId && pendingPlan) {
-                    document.getElementById('waiting-overlay').style.display = 'flex';
-                    try {
-                        const response = await fetch(APPS_SCRIPT_URL, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                            body: JSON.stringify({ action: "verify", order_id: pendingOrderId })
-                        });
-                        const orderStatusData = await response.json();
-                        
-                        if (orderStatusData && orderStatusData.order_status === "PAID") {
-                            activatePremiumSubscription(pendingPlan);
-                            alert("✅ পেমেন্ট সফল হয়েছে! আপনার অ্যাকাউন্ট আনলক করা হয়েছে।");
-                        } else {
-                            alert("❌ পেমেন্ট অসম্পূর্ণ বা বাতিল করা হয়েছে!");
-                        }
-                    } catch(e) {}
-                    
-                    localStorage.removeItem('pending_order_id');
-                    localStorage.removeItem('pending_plan');
-                    document.getElementById('waiting-overlay').style.display = 'none';
-                }
                 
                 const name = user.displayName || 'User';
                 document.getElementById('user-name').innerText = name.split(' ')[0];
@@ -646,7 +609,7 @@
             }
         }
 
-        // === PAYMENT SYSTEM ===
+        // === WHATSAPP MANUAL PAYMENT SYSTEM ===
         let selectedPlanType = '7days';
         let currentWeeklyPrice = 50;
         let currentMonthlyPrice = 150;
@@ -655,11 +618,20 @@
             const modal = document.getElementById('payment-modal');
             const weeklyText = document.getElementById('weekly-price-text');
             const monthlyText = document.getElementById('monthly-price-text');
+            
             paymentInfoDoc.onSnapshot(doc => {
                 if(doc.exists) {
                     const data = doc.data();
                     if(data.weeklyPrice) { currentWeeklyPrice = data.weeklyPrice; weeklyText.innerText = `₹${currentWeeklyPrice}`; }
                     if(data.monthlyPrice) { currentMonthlyPrice = data.monthlyPrice; monthlyText.innerText = `₹${currentMonthlyPrice}`; }
+                    
+                    // Firebase থেকে QR, UPI এবং WhatsApp ডেটা আপডেট করা (যদি অ্যাডমিন দিয়ে থাকে)
+                    if(data.qrUrl) document.getElementById('upi-qr-image').src = data.qrUrl;
+                    if(data.upiId) {
+                        document.getElementById('upi-id-text').innerText = data.upiId;
+                        window.currentUpiId = data.upiId; 
+                    }
+                    if(data.adminWhatsapp) window.adminWhatsapp = data.adminWhatsapp;
                 }
             });
             modal.style.display = 'flex';
@@ -667,46 +639,36 @@
         
         window.closePaymentModal = function() { document.getElementById('payment-modal').style.display = 'none'; }
         window.selectPlan = function(type, elem) { selectedPlanType = type; document.querySelectorAll('.plan-option').forEach(el => el.classList.remove('selected')); elem.classList.add('selected'); }
-        
-        window.submitPayment = async function() {
-            const phone = document.getElementById('payment-phone').value.trim();
-            const submitBtn = document.querySelector('.submit-pay-btn');
-            
-            if(!phone) { alert("দয়া করে আপনার ফোন নম্বর দিন।"); return; }
-            const amountToPay = selectedPlanType === '7days' ? currentWeeklyPrice : currentMonthlyPrice;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;border-top-color:#fff;"></div> প্রসেস হচ্ছে...';
-            
-            try {
-                const response = await fetch(APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: "create", uid: currentUser.uid, phone: phone, name: currentUser.displayName || 'User', amount: amountToPay })
-                });
-                const responseText = await response.text();
-                let orderData = JSON.parse(responseText);
-                
-                if(orderData && orderData.payment_session_id && orderData.order_id) {
-                    
-                    // 🌟 Local Storage এ সেভ করে রাখছি, যাতে অ্যাপ রিলোড হলে নিজে থেকেই ভেরিফাই করে নিতে পারে!
-                    localStorage.setItem('pending_order_id', orderData.order_id);
-                    localStorage.setItem('pending_plan', selectedPlanType);
-                    
-                    // Cashfree WebView এর ভেতরেই খুলবে
-                    const cashfree = Cashfree({ mode: "production" }); 
-                    cashfree.checkout({ paymentSessionId: orderData.payment_session_id, redirectTarget: "_self" });
-                    
-                } else { alert("পেমেন্ট সেশন তৈরি হয়নি!"); resetPayButton(submitBtn); }
-            } catch (err) { alert("নেটওয়ার্ক সমস্যা: " + err.message); resetPayButton(submitBtn); }
-        }
-        
-        function resetPayButton(btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Pay Now'; }
 
-        function activatePremiumSubscription(planType) {
-            const now = new Date();
-            let days = planType === '7days' ? 7 : 30;
-            const expiryDate = new Date(now.getTime() + (days * 24 * 60 * 60 * 1000));
-            usersCollection.doc(currentUser.uid).update({ subscriptionStatus: 'active', planExpiry: firebase.firestore.Timestamp.fromDate(expiryDate) });
+        window.copyUPI = function() {
+            const upiText = document.getElementById('upi-id-text').innerText;
+            navigator.clipboard.writeText(upiText).then(() => {
+                alert("UPI ID কপি হয়েছে!");
+            });
+        }
+
+        window.submitPaymentWhatsApp = function() {
+            const amountToPay = selectedPlanType === '7days' ? currentWeeklyPrice : currentMonthlyPrice;
+            const planName = selectedPlanType === '7days' ? 'Weekly Pass (7 Days)' : 'Monthly Pass (30 Days)';
+            
+            const userName = currentUser.displayName || 'User';
+            const userEmail = currentUser.email || 'N/A';
+            const userId = currentUser.uid;
+            
+            const message = `হ্যালো, আমি Premium অ্যাক্টিভ করতে চাই।\n\n` +
+                            `👤 নাম: ${userName}\n` +
+                            `📧 ইমেইল: ${userEmail}\n` +
+                            `🆔 User ID: ${userId}\n` +
+                            `📦 প্ল্যান: ${planName} (₹${amountToPay})\n\n` +
+                            `✅ আমি পেমেন্ট করেছি। পেমেন্টের স্ক্রিনশট নিচে পাঠাচ্ছি:`;
+            
+            let targetNumber = window.adminWhatsapp || "919876543210";
+            targetNumber = targetNumber.replace(/[^0-9]/g, ''); // Clean number format
+            
+            const waUrl = `https://api.whatsapp.com/send?phone=${targetNumber}&text=${encodeURIComponent(message)}`;
+            
+            window.open(waUrl, '_blank');
+            closePaymentModal();
         }
 
         // --- AI Logic ---
@@ -1036,7 +998,6 @@
         let hwSearchTerm = '';
         let hwModelSearchTerm = '';
         
-        // NEW: Universal IC variables
         let hwIcCategories = [];
         let hwIcList = [];
         let currentIcCategoryId = null;
@@ -1064,7 +1025,6 @@
             }
         });
 
-        // NEW: Load Universal IC Data
         hwIcCategoriesCol.orderBy('order').onSnapshot(snapshot => {
             hwIcCategories = [];
             snapshot.forEach(doc => hwIcCategories.push({ id: doc.id, ...doc.data() }));
@@ -1076,8 +1036,6 @@
         hwIcListCol.onSnapshot(snapshot => {
             hwIcList = [];
             snapshot.forEach(doc => hwIcList.push({ id: doc.id, ...doc.data() }));
-            
-            // নতুন যোগ করা IC যেন উপরে দেখায় তার জন্য Sort করা হলো
             hwIcList.sort((a, b) => {
                 const dateA = a.createdAt ? a.createdAt.seconds : 0;
                 const dateB = b.createdAt ? b.createdAt.seconds : 0;
@@ -1095,7 +1053,6 @@
             return name.replace(regex, '<mark>$1</mark>');
         }
 
-        // === Hardware TABS Logic ===
         window.switchHwTab = function(tab) {
             document.getElementById('tab-borneo').classList.remove('active');
             document.getElementById('tab-ic').classList.remove('active');
@@ -1105,7 +1062,7 @@
             if (tab === 'borneo') {
                 document.getElementById('tab-borneo').classList.add('active');
                 document.getElementById('hw-borneo-wrapper').style.display = 'block';
-                showHardwareBrands(); // Reset or show brands
+                showHardwareBrands(); 
             } else {
                 document.getElementById('tab-ic').classList.add('active');
                 document.getElementById('hw-ic-wrapper').style.display = 'block';
@@ -1113,7 +1070,6 @@
             }
         }
 
-        // ================= BORNEO VIEWS =================
         function renderHardwareBrands() {
             const grid = document.getElementById('hw-brands-grid');
             if (!grid) return;
@@ -1191,7 +1147,6 @@
             });
         }
 
-        // ================= UNIVERSAL IC VIEWS =================
         window.showHwIcCategories = function() {
             document.getElementById('hw-ic-categories-view').style.display = 'block';
             document.getElementById('hw-ic-list-view').style.display = 'none';
@@ -1270,8 +1225,6 @@
             });
         }
 
-
-        // ================= NAV & SEARCH EVENT LISTENERS =================
         window.switchToHardware = function() {
             if (!isPremium) {
                 openPaymentModal();
@@ -1286,7 +1239,6 @@
             const searchContainer = document.getElementById('global-search-container');
             if(searchContainer) searchContainer.style.display = 'none';
             
-            // Reset to Borneo Tab default
             switchHwTab('borneo');
             window.scrollTo(0,0);
         };
@@ -1332,7 +1284,6 @@
             });
         }
 
-        // NEW IC Search Listener
         const hwIcSearchInput = document.getElementById('hw-ic-search');
         if (hwIcSearchInput) {
             hwIcSearchInput.addEventListener('input', (e) => {
@@ -1341,7 +1292,6 @@
             });
         }
 
-        // Fullscreen Native Zoom
         window.openImageZoom = function(url) {
             if (!url) return;
             const modal = document.getElementById('image-zoom-modal');
@@ -1428,4 +1378,4 @@
         });
     </script>
 </body>
-    </html>
+</html>
